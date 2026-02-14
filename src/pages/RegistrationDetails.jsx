@@ -213,6 +213,10 @@ const RegistrationDetails = () => {
                       label="Emergency Care"
                       active={data.emergency}
                     />
+                    <StatusBadge
+                      label="Ambulance Service"
+                      active={data.ambulanceService}
+                    />
                   </div>
                 </div>
               </div>
@@ -272,10 +276,19 @@ const RegistrationDetails = () => {
                           key={i}
                           className="flex justify-between items-center bg-slate-50 p-2 rounded-sm border border-slate-100"
                         >
-                          <span className="text-[10px] font-bold uppercase">
-                            {t.name}
-                          </span>
-                          <span className="text-xs font-black text-secondary">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold uppercase">
+                              {t.name}
+                            </span>
+                            {t.discountPrice && (
+                              <span className="text-[9px] text-green-600 font-bold uppercase">
+                                Disc. Price: ₹{t.discountPrice}
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={`text-xs font-black ${t.discountPrice ? "line-through opacity-40" : "text-secondary"}`}
+                          >
                             ₹{t.price}
                           </span>
                         </div>

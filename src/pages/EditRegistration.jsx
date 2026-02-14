@@ -48,6 +48,7 @@ const EditRegistration = () => {
     homeCollection: false,
     is24x7: false,
     emergency: false,
+    ambulanceService: false,
     openTime: "",
     closeTime: "",
     weeklyOff: "",
@@ -58,7 +59,7 @@ const EditRegistration = () => {
     staffCount: "",
     pathologyDocs: null,
     certifications: [{ name: "", file: null }],
-    pricingItems: [{ test: "", price: "" }],
+    pricingItems: [{ test: "", price: "", discountPrice: "" }],
     status: true,
   });
 
@@ -109,6 +110,7 @@ const EditRegistration = () => {
             homeCollection: reg.homeCollection || false,
             is24x7: reg.is24x7 || false,
             emergency: reg.emergency || false,
+            ambulanceService: reg.ambulanceService || false,
             openTime: reg.openTime || "",
             closeTime: reg.closeTime || "",
             weeklyOff: reg.weeklyOff || "",
@@ -127,8 +129,12 @@ const EditRegistration = () => {
                 : [{ name: "", file: null }],
             pricingItems:
               reg.test && reg.test.length > 0
-                ? reg.test.map((t) => ({ test: t.name, price: t.price }))
-                : [{ test: "", price: "" }],
+                ? reg.test.map((t) => ({
+                    test: t.name,
+                    price: t.price,
+                    discountPrice: t.discountPrice,
+                  }))
+                : [{ test: "", price: "", discountPrice: "" }],
             status: reg.status !== undefined ? reg.status : true,
           });
 
@@ -197,11 +203,18 @@ const EditRegistration = () => {
   const handleAddPricing = () => {
     setFormData((prev) => ({
       ...prev,
-      pricingItems: [...prev.pricingItems, { test: "", price: "" }],
+      pricingItems: [
+        ...prev.pricingItems,
+        { test: "", price: "", discountPrice: "" },
+      ],
     }));
   };
 
   const handlePricingChange = (index, field, value) => {
+    if (field === "price" || field === "discountPrice") {
+      if (value.startsWith("-") || (value.length > 0 && value.startsWith("0")))
+        return;
+    }
     const newPricing = [...formData.pricingItems];
     newPricing[index][field] = value;
     setFormData((prev) => ({ ...prev, pricingItems: newPricing }));
@@ -244,6 +257,7 @@ const EditRegistration = () => {
         homeCollection: formData.homeCollection,
         is24x7: formData.is24x7,
         emergency: formData.emergency,
+        ambulanceService: formData.ambulanceService,
         openTime: formData.openTime,
         closeTime: formData.closeTime,
         weeklyOff: formData.weeklyOff,
@@ -270,7 +284,11 @@ const EditRegistration = () => {
 
       const testArray = formData.pricingItems
         .filter((item) => item.test && item.price)
-        .map((item) => ({ name: item.test, price: item.price }));
+        .map((item) => ({
+          name: item.test,
+          price: item.price,
+          discountPrice: item.discountPrice,
+        }));
       data.append("test", JSON.stringify(testArray));
 
       const certData = formData.certifications.map((c) => ({
@@ -655,21 +673,27 @@ const EditRegistration = () => {
           <h2 className="text-xs font-black uppercase mb-4 border-b pb-2 opacity-80">
             Tests & Services
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            {["homeCollection", "is24x7", "emergency"].map((key) => (
-              <div
-                key={key}
-                onClick={() => setFormData((p) => ({ ...p, [key]: !p[key] }))}
-                className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-all ${formData[key] ? "bg-black/5 border-black/40" : "bg-transparent border-black/10 hover:border-black/20"}`}
-              >
-                <div className="text-xl">
-                  {formData[key] ? <MdCheckBox /> : <MdCheckBoxOutlineBlank />}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {["homeCollection", "is24x7", "emergency", "ambulanceService"].map(
+              (key) => (
+                <div
+                  key={key}
+                  onClick={() => setFormData((p) => ({ ...p, [key]: !p[key] }))}
+                  className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-all ${formData[key] ? "bg-black/5 border-black/40" : "bg-transparent border-black/10 hover:border-black/20"}`}
+                >
+                  <div className="text-xl">
+                    {formData[key] ? (
+                      <MdCheckBox />
+                    ) : (
+                      <MdCheckBoxOutlineBlank />
+                    )}
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-tight opacity-80">
+                    {key.replace(/([A-Z])/g, " $1")}
+                  </span>
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-tight opacity-80">
-                  {key.replace(/([A-Z])/g, " $1")}
-                </span>
-              </div>
-            ))}
+              ),
+            )}
           </div>
           <label className={labelStyle}>Available Tests</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -734,6 +758,17 @@ const EditRegistration = () => {
                   value={item.price}
                   onChange={(e) =>
                     handlePricingChange(idx, "price", e.target.value)
+                  }
+                  style={inputStyle}
+                />
+              </div>
+              <div className="w-32">
+                <label className={labelStyle}>Discount (₹)</label>
+                <input
+                  type="number"
+                  value={item.discountPrice}
+                  onChange={(e) =>
+                    handlePricingChange(idx, "discountPrice", e.target.value)
                   }
                   style={inputStyle}
                 />

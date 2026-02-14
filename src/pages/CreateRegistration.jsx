@@ -46,6 +46,7 @@ const CreateRegistration = () => {
     homeCollection: false,
     is24x7: false,
     emergency: false,
+    ambulanceService: false,
     openTime: "",
     closeTime: "",
     weeklyOff: "",
@@ -56,7 +57,7 @@ const CreateRegistration = () => {
     staffCount: "",
     pathologyDocs: null,
     certifications: [{ name: "", file: null }],
-    pricingItems: [{ test: "", price: "" }],
+    pricingItems: [{ test: "", price: "", discountPrice: "" }],
     status: true,
   });
 
@@ -134,12 +135,15 @@ const CreateRegistration = () => {
   const handleAddPricing = () => {
     setFormData((prev) => ({
       ...prev,
-      pricingItems: [...prev.pricingItems, { test: "", price: "" }],
+      pricingItems: [
+        ...prev.pricingItems,
+        { test: "", price: "", discountPrice: "" },
+      ],
     }));
   };
 
   const handlePricingChange = (index, field, value) => {
-    if (field === "price") {
+    if (field === "price" || field === "discountPrice") {
       if (value.startsWith("-") || (value.length > 0 && value.startsWith("0")))
         return;
     }
@@ -185,6 +189,7 @@ const CreateRegistration = () => {
         homeCollection: formData.homeCollection,
         is24x7: formData.is24x7,
         emergency: formData.emergency,
+        ambulanceService: formData.ambulanceService,
         openTime: formData.openTime,
         closeTime: formData.closeTime,
         weeklyOff: formData.weeklyOff,
@@ -218,7 +223,11 @@ const CreateRegistration = () => {
 
       const testArray = formData.pricingItems
         .filter((item) => item.test && item.price)
-        .map((item) => ({ name: item.test, price: item.price }));
+        .map((item) => ({
+          name: item.test,
+          price: item.price,
+          discountPrice: item.discountPrice,
+        }));
       data.append("test", JSON.stringify(testArray));
 
       const certData = formData.certifications.map((c) => ({ name: c.name }));
@@ -630,7 +639,7 @@ const CreateRegistration = () => {
           <h2 className="text-xs font-black uppercase mb-4 border-b pb-2 opacity-80">
             Tests & Services
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div
               onClick={() =>
                 setFormData((p) => ({
@@ -677,6 +686,26 @@ const CreateRegistration = () => {
               </div>
               <span className="text-[11px] font-bold uppercase tracking-tight opacity-80">
                 EMERGENCY SERVICE
+              </span>
+            </div>
+            <div
+              onClick={() =>
+                setFormData((p) => ({
+                  ...p,
+                  ambulanceService: !p.ambulanceService,
+                }))
+              }
+              className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-all ${formData.ambulanceService ? "bg-black/5 border-black/40" : "bg-transparent border-black/10 hover:border-black/20"}`}
+            >
+              <div className="text-xl">
+                {formData.ambulanceService ? (
+                  <MdCheckBox />
+                ) : (
+                  <MdCheckBoxOutlineBlank />
+                )}
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-tight opacity-80">
+                AMBULANCE SERVICE
               </span>
             </div>
           </div>
@@ -744,6 +773,17 @@ const CreateRegistration = () => {
                   value={item.price}
                   onChange={(e) =>
                     handlePricingChange(idx, "price", e.target.value)
+                  }
+                  style={inputStyle}
+                />
+              </div>
+              <div className="w-32">
+                <label className={labelStyle}>Discount (₹)</label>
+                <input
+                  type="number"
+                  value={item.discountPrice}
+                  onChange={(e) =>
+                    handlePricingChange(idx, "discountPrice", e.target.value)
                   }
                   style={inputStyle}
                 />

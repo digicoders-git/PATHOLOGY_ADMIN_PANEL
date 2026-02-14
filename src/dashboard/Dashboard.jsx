@@ -503,13 +503,13 @@ const Dashboard = () => {
 
           {/* Dark Mode Toggle */}
           <div className="mb-8">
-            <h3
+            {/* <h3
               className="text-lg font-semibold mb-4"
               style={{ color: colors.text }}
             >
               Appearance
-            </h3>
-            <div
+            </h3> */}
+            {/* <div
               className="flex items-center justify-between p-3 rounded-lg"
               style={{ backgroundColor: colors.accent + "10" }}
             >
@@ -537,7 +537,7 @@ const Dashboard = () => {
                   }}
                 ></div>
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Color Themes */}
