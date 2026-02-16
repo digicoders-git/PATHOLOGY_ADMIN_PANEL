@@ -67,7 +67,7 @@ const CreateRegistration = () => {
         setInitialLoading(true);
         const [parentsRes, testsRes] = await Promise.all([
           getAllParents({ limit: 1000 }),
-          getTestServices({ limit: 1000 }),
+          getTestServices({ limit: 1000, status: true }),
         ]);
         if (parentsRes.success) setParents(parentsRes.data);
         if (testsRes.success) setAvailableTests(testsRes.data);
@@ -757,13 +757,14 @@ const CreateRegistration = () => {
             <div key={idx} className="flex gap-4 mb-3 items-end">
               <div className="flex-1">
                 <label className={labelStyle}>Test Name</label>
-                <input
-                  type="text"
+                <ModernSelect
+                  fullWidth
                   value={item.test}
-                  onChange={(e) =>
-                    handlePricingChange(idx, "test", e.target.value)
-                  }
-                  style={inputStyle}
+                  onChange={(val) => handlePricingChange(idx, "test", val)}
+                  options={availableTests.map((t) => ({
+                    label: t.title,
+                    value: t._id,
+                  }))}
                 />
               </div>
               <div className="w-32">

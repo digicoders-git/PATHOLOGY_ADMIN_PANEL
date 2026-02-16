@@ -278,7 +278,7 @@ const RegistrationDetails = () => {
                         >
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold uppercase">
-                              {t.name}
+                              {t.name?.title || t.name}
                             </span>
                             {t.discountPrice && (
                               <span className="text-[9px] text-green-600 font-bold uppercase">

@@ -76,7 +76,7 @@ const EditRegistration = () => {
         setInitialLoading(true);
         const [parentsRes, testsRes, regRes] = await Promise.all([
           getAllParents({ limit: 1000 }),
-          getTestServices({ limit: 1000 }),
+          getTestServices({ limit: 1000, status: true }),
           getRegistrationById(id),
         ]);
 
@@ -130,7 +130,7 @@ const EditRegistration = () => {
             pricingItems:
               reg.test && reg.test.length > 0
                 ? reg.test.map((t) => ({
-                    test: t.name,
+                    test: t.name?._id || t.name,
                     price: t.price,
                     discountPrice: t.discountPrice,
                   }))
@@ -742,13 +742,14 @@ const EditRegistration = () => {
             <div key={idx} className="flex gap-4 mb-3 items-end">
               <div className="flex-1">
                 <label className={labelStyle}>Test Name</label>
-                <input
-                  type="text"
+                <ModernSelect
+                  fullWidth
                   value={item.test}
-                  onChange={(e) =>
-                    handlePricingChange(idx, "test", e.target.value)
-                  }
-                  style={inputStyle}
+                  onChange={(val) => handlePricingChange(idx, "test", val)}
+                  options={availableTests.map((t) => ({
+                    label: t.title,
+                    value: t._id,
+                  }))}
                 />
               </div>
               <div className="w-32">
