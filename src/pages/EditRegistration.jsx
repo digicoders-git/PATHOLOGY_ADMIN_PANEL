@@ -35,6 +35,7 @@ const EditRegistration = () => {
     establishmentYear: "",
     registrationNumber: "",
     fullAddress: "",
+    areaName: "",
     city: "",
     state: "",
     pincode: "",
@@ -93,6 +94,7 @@ const EditRegistration = () => {
             establishmentYear: reg.establishmentYear || "",
             registrationNumber: reg.registrationNumber || "",
             fullAddress: reg.fullAddress || "",
+            areaName: reg.areaName || "",
             city: reg.city || "",
             state: reg.state || "",
             pincode: reg.pincode || "",
@@ -245,6 +247,7 @@ const EditRegistration = () => {
         registrationNumber: formData.registrationNumber,
         description: formData.description,
         fullAddress: formData.fullAddress,
+        areaName: formData.areaName,
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
@@ -625,6 +628,16 @@ const EditRegistration = () => {
                 type="text"
                 name="fullAddress"
                 value={formData.fullAddress}
+                onChange={handleChange}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label className={labelStyle}>Area Name</label>
+              <input
+                type="text"
+                name="areaName"
+                value={formData.areaName}
                 onChange={handleChange}
                 style={inputStyle}
               />

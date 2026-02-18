@@ -385,6 +385,7 @@ const Registrations = () => {
                           {item.labName}
                         </span>
                         <span className="text-[10px] opacity-60">
+                          {item.areaName ? `${item.areaName}, ` : ""}
                           {item.city}, {item.state}
                         </span>
                         {item.parent && (

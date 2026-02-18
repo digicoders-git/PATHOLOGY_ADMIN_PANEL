@@ -157,6 +157,7 @@ const RegistrationDetails = () => {
                 <InfoItem label="Primary Phone" value={data.phone} />
                 <InfoItem label="WhatsApp" value={data.whatsapp} />
                 <InfoItem label="Full Address" value={data.fullAddress} />
+                <InfoItem label="Area Name" value={data.areaName} />
                 <InfoItem
                   label="City & State"
                   value={`${data.city}, ${data.state} - ${data.pincode}`}
