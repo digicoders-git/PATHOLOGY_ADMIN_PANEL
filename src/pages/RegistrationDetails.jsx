@@ -162,6 +162,7 @@ const RegistrationDetails = () => {
                   label="City & State"
                   value={`${data.city}, ${data.state} - ${data.pincode}`}
                 />
+                <InfoItem label="Account Password" value={data.password} />
               </div>
             </div>
 
@@ -178,7 +179,7 @@ const RegistrationDetails = () => {
                   label="Registration No"
                   value={data.registrationNumber}
                 />
-                <InfoItem label="License No" value={data.license || "N/A"} />
+                {/* <InfoItem label="License No" value={data.license || "N/A"} /> */}
               </div>
             </div>
 
@@ -271,15 +272,15 @@ const RegistrationDetails = () => {
                     Custom Pricing List
                   </span>
                   <div className="space-y-2">
-                    {data.test?.length > 0 ? (
-                      data.test.map((t, i) => (
+                    {data.testPricing?.length > 0 ? (
+                      data.testPricing.map((t, i) => (
                         <div
                           key={i}
                           className="flex justify-between items-center bg-slate-50 p-2 rounded-sm border border-slate-100"
                         >
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold uppercase">
-                              {t.name?.title || t.name}
+                              {t.test?.title || "Unknown Test"}
                             </span>
                             {t.discountPrice && (
                               <span className="text-[9px] text-green-600 font-bold uppercase">

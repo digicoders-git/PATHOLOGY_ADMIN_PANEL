@@ -60,6 +60,7 @@ const CreateRegistration = () => {
     certifications: [{ name: "", file: null }],
     pricingItems: [{ test: "", price: "", discountPrice: "" }],
     status: true,
+    password: "",
   });
 
   useEffect(() => {
@@ -202,6 +203,7 @@ const CreateRegistration = () => {
         staffCount: formData.staffCount,
         status: true,
         source: "admin",
+        password: formData.password,
       };
 
       Object.keys(mapping).forEach((key) => {
@@ -524,6 +526,17 @@ const CreateRegistration = () => {
                 value={formData.whatsapp}
                 onChange={handleChange}
                 style={inputStyle}
+              />
+            </div>
+            <div>
+              <label className={labelStyle}>Account Password</label>
+              <input
+                type="text"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                style={inputStyle}
+                placeholder="Account Password"
               />
             </div>
           </div>

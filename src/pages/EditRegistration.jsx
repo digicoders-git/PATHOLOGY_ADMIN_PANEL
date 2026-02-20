@@ -62,6 +62,7 @@ const EditRegistration = () => {
     certifications: [{ name: "", file: null }],
     pricingItems: [{ test: "", price: "", discountPrice: "" }],
     status: true,
+    password: "",
   });
 
   const [existingFiles, setExistingFiles] = useState({
@@ -130,14 +131,15 @@ const EditRegistration = () => {
                   }))
                 : [{ name: "", file: null }],
             pricingItems:
-              reg.test && reg.test.length > 0
-                ? reg.test.map((t) => ({
-                    test: t.name?._id || t.name,
+              reg.testPricing && reg.testPricing.length > 0
+                ? reg.testPricing.map((t) => ({
+                    test: t.test?._id || t.test,
                     price: t.price,
                     discountPrice: t.discountPrice,
                   }))
                 : [{ test: "", price: "", discountPrice: "" }],
             status: reg.status !== undefined ? reg.status : true,
+            password: reg.password || "",
           });
 
           setExistingFiles({
@@ -270,6 +272,7 @@ const EditRegistration = () => {
         ifscCode: formData.ifscCode,
         staffCount: formData.staffCount,
         status: formData.status,
+        password: formData.password,
       };
 
       Object.keys(mapping).forEach((key) => {
@@ -573,6 +576,17 @@ const EditRegistration = () => {
                 value={formData.whatsapp}
                 onChange={handleChange}
                 style={inputStyle}
+              />
+            </div>
+            <div>
+              <label className={labelStyle}>Account Password</label>
+              <input
+                type="text"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                style={inputStyle}
+                placeholder="Account Password"
               />
             </div>
           </div>
