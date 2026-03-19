@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   getAllRegistrations,
   updateRegistrationStatus,
   deleteRegistration,
+  importRegistrationsExcel,
 } from "../apis/registration";
 import { toast } from "react-toastify";
 import {
@@ -14,7 +15,10 @@ import {
   MdChevronRight,
   MdVisibility,
   MdEdit,
+  MdFileDownload,
+  MdUploadFile,
 } from "react-icons/md";
+import * as XLSX from "xlsx";
 import Loader from "./ui/Loader";
 import Swal from "sweetalert2";
 import Toggle from "../components/ui/Toggle";
@@ -59,6 +63,68 @@ const Registrations = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleDownloadSample = () => {
+    const sampleData = [
+      {
+        labName: "Sample Lab",
+        labType: "Pathology",
+        establishmentYear: 2010,
+        registrationNumber: "REG123",
+        description: "Sample description",
+        fullAddress: "123 Main Street",
+        areaName: "Sector 5",
+        city: "Delhi",
+        state: "Delhi",
+        pincode: "110001",
+        phone: "9876543210",
+        email: "lab@example.com",
+        password: "password123",
+        whatsapp: "9876543210",
+        ownerName: "John Doe",
+        ownerPhone: "9876543211",
+        ownerEmail: "owner@example.com",
+        homeCollection: "true",
+        is24x7: "false",
+        emergency: "false",
+        ambulanceService: "false",
+        openTime: "08:00",
+        closeTime: "20:00",
+        weeklyOff: "Sunday",
+        upiId: "lab@upi",
+        bankName: "SBI",
+        accountNumber: "1234567890",
+        ifscCode: "SBIN0001234",
+      },
+    ];
+    const ws = XLSX.utils.json_to_sheet(sampleData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Registrations");
+    XLSX.writeFile(wb, "registration_sample.xlsx");
+  };
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+    try {
+      setImporting(true);
+      const res = await importRegistrationsExcel(file);
+      if (res.success) {
+        toast.success(res.message);
+        if (res.data?.errors?.length) {
+          res.data.errors.forEach((err) => toast.warning(err, { autoClose: 6000 }));
+        }
+        fetchData();
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -187,6 +253,35 @@ const Registrations = () => {
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-4 self-end md:self-center">
+          <button
+            onClick={handleDownloadSample}
+            className="px-4 py-2.5 border border-gray-300 text-[11px] font-black uppercase tracking-[0.1em] rounded-sm hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2"
+            style={{ color: colors.text }}
+          >
+            <MdFileDownload size={16} />
+            Download Sample
+          </button>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="px-4 py-2.5 border border-green-500 text-green-700 text-[11px] font-black uppercase tracking-[0.1em] rounded-sm hover:bg-green-50 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+          >
+            {importing ? (
+              <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <MdUploadFile size={16} />
+            )}
+            Import Excel
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleImportExcel}
+          />
+
           <button
             onClick={() => navigate("/dashboard/create-registration")}
             className="px-6 py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-[0.1em] rounded-sm hover:opacity-80 transition-all shadow-sm"

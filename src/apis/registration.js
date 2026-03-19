@@ -34,3 +34,12 @@ export const updateRegistration = async (id, data) => {
   });
   return response.data;
 };
+
+export const importRegistrationsExcel = async (file) => {
+  const formData = new FormData();
+  formData.append("excelFile", file);
+  const response = await api.post("/registrations/import-excel", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
