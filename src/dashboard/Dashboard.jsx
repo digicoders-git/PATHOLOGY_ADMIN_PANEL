@@ -7,6 +7,7 @@ import {
   MdNotifications,
   MdClose,
   MdDashboard,
+  MdLayers,
   MdLogout,
   MdPeople,
   MdStorefront,
@@ -102,6 +103,11 @@ const Dashboard = () => {
       name: "Tests & Services",
       icon: MdStorefront,
       path: "/dashboard/tests-services",
+    },
+    {
+      name: "Classifications",
+      icon: MdLayers,
+      path: "/dashboard/categories",
     },
     {
       name: "Registrations",

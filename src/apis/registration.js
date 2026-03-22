@@ -43,3 +43,8 @@ export const importRegistrationsExcel = async (file) => {
   });
   return response.data;
 };
+
+export const bulkCreateRegistrations = async (labs) => {
+  const response = await api.post("/registrations/bulk-create", { labs });
+  return response.data;
+};

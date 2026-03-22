@@ -10,11 +10,13 @@ const Parents = React.lazy(() => import("../pages/Parents"));
 const CreateRegistration = React.lazy(
   () => import("../pages/CreateRegistration"),
 );
+const Categories = React.lazy(() => import("../pages/Categories"));
 const EditRegistration = React.lazy(() => import("../pages/EditRegistration"));
 
 export const AppRoute = [
   { path: "profile", component: Profile },
   { path: "tests-services", component: TestsServices },
+  { path: "categories", component: Categories },
   { path: "registrations", component: Registrations },
   { path: "create-registration", component: CreateRegistration },
   { path: "edit-registration/:id", component: EditRegistration },

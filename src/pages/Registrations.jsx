@@ -5,7 +5,7 @@ import {
   getAllRegistrations,
   updateRegistrationStatus,
   deleteRegistration,
-  importRegistrationsExcel,
+  bulkCreateRegistrations,
 } from "../apis/registration";
 import { toast } from "react-toastify";
 import {
@@ -105,22 +105,55 @@ const Registrations = () => {
     XLSX.writeFile(wb, "registration_sample.xlsx");
   };
 
+  const [previewData, setPreviewData] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // Reset file input for same file selection
     e.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        if (data.length === 0) {
+          toast.error("Excel file is empty");
+          return;
+        }
+        
+        setPreviewData(data);
+        setShowPreview(true);
+      } catch (err) {
+        toast.error("Failed to parse Excel file");
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleConfirmImport = async () => {
+    if (!previewData) return;
     try {
       setImporting(true);
-      const res = await importRegistrationsExcel(file);
+      const res = await bulkCreateRegistrations(previewData);
       if (res.success) {
         toast.success(res.message);
         if (res.data?.errors?.length) {
-          res.data.errors.forEach((err) => toast.warning(err, { autoClose: 6000 }));
+          res.data.errors.forEach(err => toast.warning(err, { autoClose: 6000 }));
         }
+        setShowPreview(false);
+        setPreviewData(null);
         fetchData();
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || "Import failed");
+      toast.error(error?.response?.data?.message || "Import failed");
     } finally {
       setImporting(false);
     }
@@ -239,41 +272,51 @@ const Registrations = () => {
 
   return (
     <div className="p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8 border-b pb-6">
         <div>
-          <h1
-            className="text-2xl font-bold uppercase tracking-tight"
-            style={{ color: colors.text }}
-          >
-            Pathology Registrations
-          </h1>
-          <p className="text-sm opacity-60" style={{ color: colors.text }}>
-            Manage and review lab registration applications
-          </p>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Pathology Registrations</h1>
+          <p className="text-sm text-slate-500 mt-1">Manage and review laboratory applications</p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-4 self-end md:self-center">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex bg-slate-100 rounded-lg p-1 mr-2">
+            <button
+              onClick={() => { setRegType("individual"); setPage(1); setParentIdFilter(""); }}
+              className={`px-4 py-1.5 text-xs font-bold transition-all rounded-md flex items-center gap-2 ${regType === "individual" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              Individual <span className="text-[10px] opacity-60">({stats.individualCount || 0})</span>
+            </button>
+            <button
+              onClick={() => { setRegType("parent"); setPage(1); }}
+              className={`px-4 py-1.5 text-xs font-bold transition-all rounded-md flex items-center gap-2 ${regType === "parent" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              Parent <span className="text-[10px] opacity-60">({stats.parentCount || 0})</span>
+            </button>
+          </div>
+
           <button
             onClick={handleDownloadSample}
-            className="px-4 py-2.5 border border-gray-300 text-[11px] font-black uppercase tracking-[0.1em] rounded-sm hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2"
-            style={{ color: colors.text }}
+            className="px-4 py-2 bg-white border border-slate-200 text-xs font-bold text-slate-600 rounded-lg hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
           >
             <MdFileDownload size={16} />
-            Download Sample
+            Sample File
           </button>
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            className="px-4 py-2.5 border border-green-500 text-green-700 text-[11px] font-black uppercase tracking-[0.1em] rounded-sm hover:bg-green-50 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-all shadow-sm flex items-center gap-2"
           >
-            {importing ? (
-              <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <MdUploadFile size={16} />
-            )}
-            Import Excel
+            <MdUploadFile size={16} />
+            {importing ? "Importing..." : "Import Excel"}
           </button>
+
+          <button
+            onClick={() => navigate("/dashboard/create-registration")}
+            className="px-5 py-2 bg-slate-900 border border-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2"
+          >
+            <span>+ New Registration</span>
+          </button>
+
           <input
             ref={fileInputRef}
             type="file"
@@ -281,44 +324,6 @@ const Registrations = () => {
             className="hidden"
             onChange={handleImportExcel}
           />
-
-          <button
-            onClick={() => navigate("/dashboard/create-registration")}
-            className="px-6 py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-[0.1em] rounded-sm hover:opacity-80 transition-all shadow-sm"
-          >
-            + Register New Lab
-          </button>
-
-          {/* Tabs Switcher */}
-          <div className="flex bg-gray-100 p-1 rounded-sm shadow-inner">
-            <button
-              onClick={() => {
-                setRegType("individual");
-                setPage(1);
-                setParentIdFilter("");
-              }}
-              className={`px-6 py-2 text-sm transition-all rounded-sm flex items-center gap-2 ${regType === "individual" ? "bg-white shadow-sm font-bold opacity-100" : "opacity-40 hover:opacity-60"}`}
-              style={{ color: colors.text }}
-            >
-              <span>Individual Labs</span>
-              <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full text-[10px]">
-                {stats.individualCount || 0}
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                setRegType("parent");
-                setPage(1);
-              }}
-              className={`px-6 py-2 text-sm transition-all rounded-sm flex items-center gap-2 ${regType === "parent" ? "bg-white shadow-sm font-bold opacity-100" : "opacity-40 hover:opacity-60"}`}
-              style={{ color: colors.text }}
-            >
-              <span>Parent Labs</span>
-              <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full text-[10px]">
-                {stats.parentCount || 0}
-              </span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -600,6 +605,78 @@ const Registrations = () => {
           </div>
         )}
       </div>
+
+      {/* Excel Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-sm border shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-slate-50">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Preview Excel Data</h2>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mt-1">Review the list before confirming import ({previewData?.length} labs found)</p>
+              </div>
+              <button 
+                onClick={() => setShowPreview(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                disabled={importing}
+              >
+                <MdDelete size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-0">
+              <table className="w-full text-left border-collapse min-w-[1200px]">
+                <thead className="sticky top-0 bg-white shadow-sm z-10">
+                  <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-600 border-b">
+                    <th className="px-6 py-4">Lab Name</th>
+                    <th className="px-6 py-4">Owner</th>
+                    <th className="px-6 py-4">Phone</th>
+                    <th className="px-6 py-4">Email</th>
+                    <th className="px-6 py-4">City</th>
+                    <th className="px-6 py-4">Establishment</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {previewData.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-3 text-sm font-bold text-slate-700">{row.labName || '---'}</td>
+                      <td className="px-6 py-3 text-sm text-slate-600">{row.ownerName || '---'}</td>
+                      <td className="px-6 py-3 text-sm text-slate-600">{row.phone || '---'}</td>
+                      <td className="px-6 py-3 text-sm text-slate-600 font-medium">{row.email || '---'}</td>
+                      <td className="px-6 py-3 text-sm text-slate-500">{row.city || '---'}</td>
+                      <td className="px-6 py-3 text-sm text-slate-500">{row.establishmentYear || '---'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-6 border-t flex justify-end gap-3 bg-slate-50">
+              <button
+                onClick={() => setShowPreview(false)}
+                className="px-6 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200 rounded-sm transition-all"
+                disabled={importing}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmImport}
+                disabled={importing}
+                className="px-8 py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-sm hover:opacity-80 transition-all flex items-center gap-2"
+              >
+                {importing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    CONFIRMING...
+                  </>
+                ) : (
+                  'CONFIRM IMPORT'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
