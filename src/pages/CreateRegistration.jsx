@@ -16,6 +16,17 @@ import {
 import ModernSelect from "../components/ui/ModernSelect";
 import MapPicker from "../components/ui/MapPicker";
 
+const CERT_OPTIONS = [
+  "NABL (ISO 15189 / ISO/IEC 17025)",
+  "NABH (Diagnostic Quality & Safety)",
+  "CAP (International Standards)",
+  "GLP (Good Laboratory Practice)",
+  "FSSAI Notification",
+  "ISO 15189",
+  "ISO/IEC 17025",
+  "BIS Recognition"
+];
+
 const CreateRegistration = () => {
   const { colors } = useTheme();
   const navigate = useNavigate();
@@ -58,7 +69,7 @@ const CreateRegistration = () => {
     ifscCode: "",
     staffCount: "",
     pathologyDocs: null,
-    certifications: [{ name: "", file: null }],
+    certifications: [],
     pricingItems: [{ test: "", price: "", discountPercent: "", discountPrice: "" }],
     status: true,
     password: "",
@@ -117,24 +128,30 @@ const CreateRegistration = () => {
     }));
   };
 
-  const handleAddCert = () => {
-    setFormData((prev) => ({
-      ...prev,
-      certifications: [...prev.certifications, { name: "", file: null }],
-    }));
+  const handleCertToggle = (name) => {
+    setFormData((prev) => {
+      const exists = prev.certifications.find(c => c.name === name);
+      if (exists) {
+        return {
+          ...prev,
+          certifications: prev.certifications.filter(c => c.name !== name)
+        };
+      } else {
+        return {
+          ...prev,
+          certifications: [...prev.certifications, { name, file: null }]
+        };
+      }
+    });
   };
 
-  const handleCertChange = (index, field, value) => {
-    const newCerts = [...formData.certifications];
-    newCerts[index][field] = value;
-    setFormData((prev) => ({ ...prev, certifications: newCerts }));
-  };
-
-  const handleRemoveCert = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      certifications: prev.certifications.filter((_, i) => i !== index),
-    }));
+  const handleCertFileChange = (name, file) => {
+     setFormData(prev => ({
+        ...prev,
+        certifications: prev.certifications.map(c => 
+           c.name === name ? { ...c, file } : c
+        )
+     }));
   };
 
   const handleAddPricing = () => {
@@ -877,7 +894,7 @@ const CreateRegistration = () => {
           ))}
         </div>
 
-        {/* Certifications */}
+        {/* Certifications (Checkbox based) */}
         <div
           className={groupStyle}
           style={{
@@ -885,54 +902,51 @@ const CreateRegistration = () => {
             borderColor: colors.accent + "20",
           }}
         >
-          <div className="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 className="text-xs font-black uppercase opacity-80">
-              Certifications
-            </h2>
-            <button
-              type="button"
-              onClick={handleAddCert}
-              className="text-[10px] font-bold uppercase flex items-center gap-1 opacity-60 hover:opacity-100"
-            >
-              <MdAdd size={16} /> Add Certificate
-            </button>
+          <h2 className="text-xs font-black uppercase mb-4 border-b pb-2 opacity-80">
+            Diagnostic Lab Certifications & Accreditations
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {CERT_OPTIONS.map((certName) => {
+              const isSelected = formData.certifications.some(c => c.name === certName);
+              const selectedCert = formData.certifications.find(c => c.name === certName);
+
+              return (
+                <div 
+                  key={certName}
+                  className={`p-4 border rounded transition-all flex flex-col gap-3 ${isSelected ? 'bg-black/5 border-black/40' : 'border-black/10 opacity-60 hover:opacity-100'}`}
+                >
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => handleCertToggle(certName)}
+                  >
+                    <div className="text-xl">
+                      {isSelected ? <MdCheckBox /> : <MdCheckBoxOutlineBlank />}
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-tight">
+                      {certName}
+                    </span>
+                  </div>
+                  
+                  {/* Optional File Upload if Ticked */}
+                  {isSelected && (
+                    <div className="mt-2 pl-8 border-l-2 ml-2" style={{ borderColor: colors.accent+'30' }}>
+                      <label className="text-[9px] font-bold uppercase block mb-1 opacity-50">Upload Certificate Copy (Optional)</label>
+                      <input 
+                        type="file" 
+                        className="text-[10px]"
+                        onChange={(e) => handleCertFileChange(certName, e.target.files[0])}
+                      />
+                      {selectedCert?.file && (
+                         <span className="text-[9px] text-green-600 block mt-1 font-bold italic">
+                            ✓ {selectedCert.file.name} attached
+                         </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          {formData.certifications.map((cert, idx) => (
-            <div
-              key={idx}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 border rounded bg-black/5 relative"
-              style={{ borderColor: colors.accent + "10" }}
-            >
-              <div>
-                <label className={labelStyle}>Certificate Name</label>
-                <input
-                  type="text"
-                  value={cert.name}
-                  onChange={(e) =>
-                    handleCertChange(idx, "name", e.target.value)
-                  }
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label className={labelStyle}>File Attachment</label>
-                <input
-                  type="file"
-                  onChange={(e) =>
-                    handleCertChange(idx, "file", e.target.files[0])
-                  }
-                  className="text-xs"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => handleRemoveCert(idx)}
-                className="absolute top-2 right-2 p-1 text-red-500 rounded hover:bg-black/10"
-              >
-                <MdDelete size={18} />
-              </button>
-            </div>
-          ))}
         </div>
 
         {/* Pathology Documents */}
