@@ -14,6 +14,7 @@ import {
   MdCheckBoxOutlineBlank,
 } from "react-icons/md";
 import ModernSelect from "../components/ui/ModernSelect";
+import MapPicker from "../components/ui/MapPicker";
 
 const CreateRegistration = () => {
   const { colors } = useTheme();
@@ -58,9 +59,11 @@ const CreateRegistration = () => {
     staffCount: "",
     pathologyDocs: null,
     certifications: [{ name: "", file: null }],
-    pricingItems: [{ test: "", price: "", discountPrice: "" }],
+    pricingItems: [{ test: "", price: "", discountPercent: "", discountPrice: "" }],
     status: true,
     password: "",
+    latitude: "",
+    longitude: "",
   });
 
   useEffect(() => {
@@ -139,18 +142,32 @@ const CreateRegistration = () => {
       ...prev,
       pricingItems: [
         ...prev.pricingItems,
-        { test: "", price: "", discountPrice: "" },
+        { test: "", price: "", discountPercent: "", discountPrice: "" },
       ],
     }));
   };
 
   const handlePricingChange = (index, field, value) => {
-    if (field === "price" || field === "discountPrice") {
-      if (value.startsWith("-") || (value.length > 0 && value.startsWith("0")))
-        return;
+    if (field === "price" || field === "discountPercent") {
+      if (value.startsWith("-")) return;
     }
     const newPricing = [...formData.pricingItems];
     newPricing[index][field] = value;
+
+    // Automatic Calculation
+    const price = parseFloat(newPricing[index].price || 0);
+    const percent = parseFloat(newPricing[index].discountPercent || 0);
+
+    if (field === "price" || field === "discountPercent") {
+        if (price > 0 && percent >= 0) {
+            const calculatedFinal = price - (price * percent / 100);
+            newPricing[index].discountPrice = calculatedFinal > 0 ? calculatedFinal.toFixed(2) : "0";
+        }
+    } else if (field === "discountPrice") {
+        // Allow manual overwrite if needed, but usually percent will drive it
+        newPricing[index].discountPrice = value;
+    }
+
     setFormData((prev) => ({ ...prev, pricingItems: newPricing }));
   };
 
@@ -204,6 +221,8 @@ const CreateRegistration = () => {
         status: true,
         source: "admin",
         password: formData.password,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
       };
 
       Object.keys(mapping).forEach((key) => {
@@ -231,6 +250,7 @@ const CreateRegistration = () => {
           name: item.test,
           price: item.price,
           discountPrice: item.discountPrice,
+          discountPercent: item.discountPercent || "",
         }));
       data.append("test", JSON.stringify(testArray));
 
@@ -651,6 +671,28 @@ const CreateRegistration = () => {
               />
             </div>
           </div>
+
+          <div className="mt-8 border-t pt-8">
+             <h2 className="text-xs font-black uppercase mb-4 opacity-80">
+                Fix Exact Laboratory Location (Google Map)
+             </h2>
+             <MapPicker 
+                lat={formData.latitude}
+                lng={formData.longitude}
+                onLocationSelect={(loc) => {
+                   setFormData(prev => ({
+                      ...prev,
+                      latitude: loc.lat,
+                      longitude: loc.lng,
+                      // Sync address to fullAddress field
+                      fullAddress: loc.address || prev.fullAddress
+                   }));
+                }}
+             />
+             <p className="text-[10px] mt-2 opacity-40 font-bold uppercase italic">
+                * Coordinates are automatically captured from the map selection
+             </p>
+          </div>
         </div>
 
         {/* Services & Tests */}
@@ -793,7 +835,7 @@ const CreateRegistration = () => {
                 />
               </div>
               <div className="w-32">
-                <label className={labelStyle}>Price (₹)</label>
+                  <label className={labelStyle}>Price (MRP ₹)</label>
                 <input
                   type="number"
                   value={item.price}
@@ -803,15 +845,25 @@ const CreateRegistration = () => {
                   style={inputStyle}
                 />
               </div>
-              <div className="w-32">
-                <label className={labelStyle}>Discount (₹)</label>
+              <div className="w-24">
+                <label className={labelStyle}>Discount (%)</label>
                 <input
                   type="number"
-                  value={item.discountPrice}
+                  placeholder="%"
+                  value={item.discountPercent}
                   onChange={(e) =>
-                    handlePricingChange(idx, "discountPrice", e.target.value)
+                    handlePricingChange(idx, "discountPercent", e.target.value)
                   }
                   style={inputStyle}
+                />
+              </div>
+              <div className="w-32">
+                <label className={labelStyle}>Final (₹)</label>
+                <input
+                  type="number"
+                  readOnly
+                  value={item.discountPrice}
+                  style={{...inputStyle, background: colors.accent+'05', opacity: 0.7}}
                 />
               </div>
               <button

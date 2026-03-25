@@ -60,7 +60,7 @@ const EditRegistration = () => {
     staffCount: "",
     pathologyDocs: null,
     certifications: [{ name: "", file: null }],
-    pricingItems: [{ test: "", price: "", discountPrice: "" }],
+    pricingItems: [{ test: "", price: "", discountPercent: "", discountPrice: "" }],
     status: true,
     password: "",
   });
@@ -132,12 +132,18 @@ const EditRegistration = () => {
                 : [{ name: "", file: null }],
             pricingItems:
               reg.testPricing && reg.testPricing.length > 0
-                ? reg.testPricing.map((t) => ({
-                    test: t.test?._id || t.test,
-                    price: t.price,
-                    discountPrice: t.discountPrice,
-                  }))
-                : [{ test: "", price: "", discountPrice: "" }],
+                ? reg.testPricing.map((t) => {
+                    const price = parseFloat(t.price || 0);
+                    const final = parseFloat(t.discountPrice || 0);
+                    const calculatedPercent = price > 0 ? Math.round(((price - final) / price) * 100) : 0;
+                    return {
+                        test: t.test?._id || t.test,
+                        price: t.price,
+                        discountPercent: t.discountPercent || (calculatedPercent > 0 ? calculatedPercent.toString() : ""),
+                        discountPrice: t.discountPrice,
+                    };
+                  })
+                : [{ test: "", price: "", discountPercent: "", discountPrice: "" }],
             status: reg.status !== undefined ? reg.status : true,
             password: reg.password || "",
           });
@@ -209,18 +215,29 @@ const EditRegistration = () => {
       ...prev,
       pricingItems: [
         ...prev.pricingItems,
-        { test: "", price: "", discountPrice: "" },
+        { test: "", price: "", discountPercent: "", discountPrice: "" },
       ],
     }));
   };
 
   const handlePricingChange = (index, field, value) => {
-    if (field === "price" || field === "discountPrice") {
-      if (value.startsWith("-") || (value.length > 0 && value.startsWith("0")))
-        return;
+    if (field === "price" || field === "discountPercent") {
+      if (value.startsWith("-")) return;
     }
     const newPricing = [...formData.pricingItems];
     newPricing[index][field] = value;
+
+    // Automatic Calculation
+    const price = parseFloat(newPricing[index].price || 0);
+    const percent = parseFloat(newPricing[index].discountPercent || 0);
+
+    if (field === "price" || field === "discountPercent") {
+        if (price > 0 && percent >= 0) {
+            const calculatedFinal = price - (price * percent / 100);
+            newPricing[index].discountPrice = calculatedFinal > 0 ? calculatedFinal.toFixed(2) : "0";
+        }
+    }
+
     setFormData((prev) => ({ ...prev, pricingItems: newPricing }));
   };
 
@@ -294,6 +311,7 @@ const EditRegistration = () => {
           name: item.test,
           price: item.price,
           discountPrice: item.discountPrice,
+          discountPercent: item.discountPercent || "",
         }));
       data.append("test", JSON.stringify(testArray));
 
@@ -780,7 +798,7 @@ const EditRegistration = () => {
                 />
               </div>
               <div className="w-32">
-                <label className={labelStyle}>Price (₹)</label>
+                <label className={labelStyle}>Price (MRP ₹)</label>
                 <input
                   type="number"
                   value={item.price}
@@ -790,15 +808,25 @@ const EditRegistration = () => {
                   style={inputStyle}
                 />
               </div>
-              <div className="w-32">
-                <label className={labelStyle}>Discount (₹)</label>
+              <div className="w-24">
+                <label className={labelStyle}>Discount (%)</label>
                 <input
                   type="number"
-                  value={item.discountPrice}
+                  placeholder="%"
+                  value={item.discountPercent}
                   onChange={(e) =>
-                    handlePricingChange(idx, "discountPrice", e.target.value)
+                    handlePricingChange(idx, "discountPercent", e.target.value)
                   }
                   style={inputStyle}
+                />
+              </div>
+              <div className="w-32">
+                <label className={labelStyle}>Final (₹)</label>
+                <input
+                  type="number"
+                  readOnly
+                  value={item.discountPrice}
+                  style={{...inputStyle, background: colors.accent+'05', opacity: 0.7}}
                 />
               </div>
               <button

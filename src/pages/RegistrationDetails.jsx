@@ -162,7 +162,45 @@ const RegistrationDetails = () => {
                   label="City & State"
                   value={`${data.city}, ${data.state} - ${data.pincode}`}
                 />
+                <div className="grid grid-cols-2 gap-4">
+                   <InfoItem label="Latitude" value={data.latitude} />
+                   <InfoItem label="Longitude" value={data.longitude} />
+                </div>
                 <InfoItem label="Account Password" value={data.password} />
+              </div>
+            </div>
+
+            {/* Google Map Display */}
+            <div className="md:col-span-2 space-y-6">
+              <h4 className="text-xs font-black uppercase tracking-widest text-secondary border-b pb-2">
+                Exact Laboratory Location
+              </h4>
+              <div className="w-full h-80 rounded-sm border-2 border-slate-100 overflow-hidden shadow-sm bg-slate-50 relative group">
+                {data.latitude && data.longitude ? (
+                  <iframe
+                    title="Lab Location"
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    style={{ border: 0 }}
+                    src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBEss4wpsQ0o9WPBjDgHsSByUzFuo2oSNE&q=${data.latitude},${data.longitude}&zoom=16`}
+                    allowFullScreen
+                  ></iframe>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-slate-400 text-xs font-bold uppercase italic">
+                    Location coordinates not available
+                  </div>
+                )}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a 
+                      href={`https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-white px-4 py-2 rounded-sm shadow-xl text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+                    >
+                        Open in Google Maps
+                    </a>
+                </div>
               </div>
             </div>
 

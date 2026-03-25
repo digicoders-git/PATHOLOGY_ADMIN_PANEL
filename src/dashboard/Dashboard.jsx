@@ -20,9 +20,12 @@ import {
   MdQuestionAnswer,
   MdOutlineFormatListNumberedRtl,
   MdBusiness,
+  MdPayments,
   MdHistory,
   MdAlarm,
   MdCalendarToday,
+  MdDirectionsBike,
+  MdPictureAsPdf
 } from "react-icons/md";
 
 import { Clock } from "./Clock";
@@ -100,14 +103,14 @@ const Dashboard = () => {
   const navLinks = [
     { name: "Dashboard", icon: MdDashboard, path: "/dashboard" },
     {
+      name: "Categories",
+      icon: MdLayers,
+      path: "/dashboard/categories",
+    },
+    {
       name: "Tests & Services",
       icon: MdStorefront,
       path: "/dashboard/tests-services",
-    },
-    {
-      name: "Classifications",
-      icon: MdLayers,
-      path: "/dashboard/categories",
     },
     {
       name: "Registrations",
@@ -118,6 +121,11 @@ const Dashboard = () => {
       name: "Parents",
       icon: MdBusiness,
       path: "/dashboard/parents",
+    },
+    {
+      name: "Plans & Pricing",
+      icon: MdPayments,
+      path: "/dashboard/plans",
     },
     { name: "Profile", icon: MdPerson, path: "/dashboard/profile" },
   ];

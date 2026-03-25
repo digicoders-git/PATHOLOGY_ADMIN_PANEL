@@ -97,6 +97,8 @@ const Registrations = () => {
         bankName: "SBI",
         accountNumber: "1234567890",
         ifscCode: "SBIN0001234",
+        latitude: "28.6139",
+        longitude: "77.2090",
       },
     ];
     const ws = XLSX.utils.json_to_sheet(sampleData);
@@ -632,18 +634,20 @@ const Registrations = () => {
                     <th className="px-6 py-4">Owner</th>
                     <th className="px-6 py-4">Phone</th>
                     <th className="px-6 py-4">Email</th>
-                    <th className="px-6 py-4">City</th>
+                    <th className="px-6 py-4">Location (Lat, Long)</th>
                     <th className="px-6 py-4">Establishment</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {previewData.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={idx} className="hover:bg-slate-50/50 transition-all">
                       <td className="px-6 py-3 text-sm font-bold text-slate-700">{row.labName || '---'}</td>
                       <td className="px-6 py-3 text-sm text-slate-600">{row.ownerName || '---'}</td>
                       <td className="px-6 py-3 text-sm text-slate-600">{row.phone || '---'}</td>
                       <td className="px-6 py-3 text-sm text-slate-600 font-medium">{row.email || '---'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-500">{row.city || '---'}</td>
+                      <td className="px-6 py-3 text-[10px] text-slate-400 font-bold">
+                        {row.latitude && row.longitude ? `${row.latitude}, ${row.longitude}` : (row.fullAddress || '---')}
+                      </td>
                       <td className="px-6 py-3 text-sm text-slate-500">{row.establishmentYear || '---'}</td>
                     </tr>
                   ))}
