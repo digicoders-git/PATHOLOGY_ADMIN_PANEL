@@ -209,7 +209,7 @@ const Plans = () => {
 
       {/* CREATE / EDIT MODAL */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded p-0 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl scale-in duration-200">
              <div className="p-6 border-b flex justify-between items-center bg-slate-50">
                <div>
