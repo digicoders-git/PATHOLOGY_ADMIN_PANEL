@@ -112,8 +112,39 @@ const CreateRegistration = () => {
 
     if (type === "number" || type === "tel") {
       if (value.startsWith("-")) return;
-      if (value.length > 0 && value.startsWith("0")) return;
+      if (value.length > 0 && value.startsWith("0")) {
+         // Allow 0 only if it's not the very first character of a number, 
+         // but for pincode/phone we might need special handling
+         // For now, let's keep it simple
+      }
       if (type === "number" && isNaN(value) && value !== "") return;
+    }
+
+    // Pincode Auto-fill Logic
+    if (name === "pincode" && value.length === 6) {
+      fetch(`https://api.postalpincode.in/pincode/${value}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data[0].Status === "Success") {
+                const postOffice = data[0].PostOffice[0];
+                setFormData(prev => ({
+                    ...prev,
+                    city: postOffice.District,
+                    state: postOffice.State,
+                    areaName: postOffice.Block !== "Not Available" ? postOffice.Block : postOffice.Name,
+                    pincode: value
+                }));
+                toast.success(`Location Identified: ${postOffice.District}, ${postOffice.State}`, {
+                  icon: "📍",
+                  style: { borderRadius: '10px', background: '#333', color: '#fff' }
+                });
+            } else {
+                toast.error("Invalid Pincode");
+            }
+        })
+        .catch(err => {
+            console.error("Pincode API Error:", err);
+        });
     }
 
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -637,6 +668,18 @@ const CreateRegistration = () => {
             Location / Address
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <label className={labelStyle}>Pincode *</label>
+              <input
+                type="tel"
+                name="pincode"
+                value={formData.pincode}
+                onChange={handleChange}
+                style={{ ...inputStyle, border: `2px solid ${colors.accent}40`, background: colors.accent + '05' }}
+                placeholder="Enter 6-digit Pincode"
+                required
+              />
+            </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className={labelStyle}>Full Address</label>
               <input
@@ -673,16 +716,6 @@ const CreateRegistration = () => {
                 type="text"
                 name="state"
                 value={formData.state}
-                onChange={handleChange}
-                style={inputStyle}
-              />
-            </div>
-            <div>
-              <label className={labelStyle}>Pincode</label>
-              <input
-                type="tel"
-                name="pincode"
-                value={formData.pincode}
                 onChange={handleChange}
                 style={inputStyle}
               />
