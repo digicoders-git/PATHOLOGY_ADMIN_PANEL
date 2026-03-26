@@ -118,6 +118,11 @@ const Dashboard = () => {
       path: "/dashboard/registrations",
     },
     {
+      name: "Test Bookings",
+      icon: MdCalendarToday,
+      path: "/dashboard/bookings",
+    },
+    {
       name: "Parents",
       icon: MdBusiness,
       path: "/dashboard/parents",
