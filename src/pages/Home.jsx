@@ -10,6 +10,8 @@ import {
   MdTrendingUp,
   MdTimeline,
   MdCircle,
+  MdCalendarToday,
+  MdPeople,
   MdChevronRight
 } from "react-icons/md";
 import Loader from "./ui/Loader";
@@ -24,6 +26,8 @@ const Home = () => {
     parents: 0,
     tests: 0,
     categories: 0,
+    bookings: 0,
+    patients: 0,
     registrationTrend: [],
     categoryDist: [],
     statusDist: [],
@@ -48,10 +52,12 @@ const Home = () => {
   }, []);
 
   const cards = [
-    { title: "Tests & Services", count: stats.tests, icon: MdStorefront, path: "/dashboard/tests-services", color: "#3B82F6" },
-    { title: "Registrations", count: stats.registrations, icon: MdOutlineArticle, path: "/dashboard/registrations", color: "#10B981" },
+    { title: "Total Bookings", count: stats.bookings, icon: MdCalendarToday, path: "/dashboard/bookings", color: "#10B981" },
+    { title: "Total Patients", count: stats.patients, icon: MdPeople, path: "/dashboard/patients", color: "#3B82F6" },
+    { title: "Registrations", count: stats.registrations, icon: MdOutlineArticle, path: "/dashboard/registrations", color: "#6366F1" },
     { title: "Network Parents", count: stats.parents, icon: MdBusiness, path: "/dashboard/parents", color: "#8B5CF6" },
-    { title: "Categories", count: stats.categories, icon: MdLayers, path: "/dashboard/tests-services", color: "#F59E0B" },
+    { title: "Tests & Services", count: stats.tests, icon: MdStorefront, path: "/dashboard/tests-services", color: "#F59E0B" },
+    { title: "Categories", count: stats.categories, icon: MdLayers, path: "/dashboard/categories", color: "#EC4899" },
   ];
 
   // Simple Chart Options
@@ -96,7 +102,7 @@ const Home = () => {
       </div>
 
       {/* Refined Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, index) => (
           <div
             key={index}

@@ -25,7 +25,9 @@ import {
   MdAlarm,
   MdCalendarToday,
   MdDirectionsBike,
-  MdPictureAsPdf
+  MdPictureAsPdf,
+  MdFamilyRestroom,
+  MdCreditCard
 } from "react-icons/md";
 
 import { Clock } from "./Clock";
@@ -124,12 +126,17 @@ const Dashboard = () => {
     },
     {
       name: "Parents",
-      icon: MdBusiness,
+      icon: MdFamilyRestroom,
       path: "/dashboard/parents",
     },
     {
-      name: "Plans & Pricing",
-      icon: MdPayments,
+      name: "Patients",
+      icon: MdPerson,
+      path: "/dashboard/patients",
+    },
+    {
+      name: "Plans",
+      icon: MdCreditCard,
       path: "/dashboard/plans",
     },
     { name: "Profile", icon: MdPerson, path: "/dashboard/profile" },
