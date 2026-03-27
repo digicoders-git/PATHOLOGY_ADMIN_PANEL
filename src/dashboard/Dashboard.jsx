@@ -148,6 +148,7 @@ const Dashboard = () => {
   ];
 
   const themeOptions = [
+    { name: "Brand", key: "brand", color: "#156dac" },
     { name: "Mono", key: "mono", color: "#000000" },
     { name: "Cyan", key: "cyan", color: "#0EA5E9" },
     { name: "Neon", key: "neon", color: "#22C55E" },
@@ -177,17 +178,15 @@ const Dashboard = () => {
         >
           {sidebarOpen ? (
             <div className="transition-all duration-500 ease-out flex items-center justify-center w-full">
-              {/* <img
-                src={landLogoo}
-                className="max-w-[180px] h-11 object-contain"
-                alt="Healing Escape"
-              /> */}
-              <h1 className="text-2xl font-bold">Easy Test Lab</h1>
+              <img
+                src="/logo 2.png"
+                className="max-h-18 object-contain"
+                alt="Logo"
+              />
             </div>
           ) : (
             <div className="w-12 h-12 flex items-center justify-center transition-all duration-500 overflow-hidden">
-              {/* <img src={logoo} className="w-10 h-10 object-contain" alt="HE" /> */}
-              <h1 className="text-2xl font-bold">Easy</h1>
+              <img src="/logo 2.png" className="w-10 h-10 object-contain" alt="Logo" />
             </div>
           )}
         </div>
