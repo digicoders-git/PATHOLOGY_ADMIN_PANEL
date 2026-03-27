@@ -31,6 +31,11 @@ export const bulkCreateTestServices = async (data) => {
   return response.data;
 };
 
+export const bulkCreateCategories = async (data) => {
+  const response = await api.post("/categories/bulk-create", data);
+  return response.data;
+};
+
 // Category APIs
 export const getCategories = async () => {
   const response = await api.get("/categories");

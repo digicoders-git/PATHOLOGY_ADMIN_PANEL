@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 import {
   getCategories,
@@ -7,6 +7,7 @@ import {
   deleteCategory,
   getCategoryTree,
 } from "../apis/testAndServices";
+import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import {
   MdAdd,
@@ -19,6 +20,8 @@ import {
   MdKeyboardArrowDown,
   MdOutlineScience,
   MdCategory,
+  MdFileDownload,
+  MdUploadFile,
 } from "react-icons/md";
 import Swal from "sweetalert2";
 
@@ -35,6 +38,10 @@ const Categories = () => {
   const [editId, setEditId] = useState(null);
   const [catForm, setCatForm] = useState({ name: "", description: "", image: null });
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchCats = useCallback(async () => {
     try {
@@ -150,6 +157,91 @@ const Categories = () => {
     return image.cloudinary || (image.local ? `${import.meta.env.VITE_API_BASE_URL}/${image.local}` : null);
   };
 
+  // Sample Download
+  const handleDownloadSample = () => {
+    const sampleData = [
+      {
+        name: "Blood Tests",
+        description: "Complete blood analysis and related tests",
+      },
+      {
+        name: "Liver Tests",
+        description: "Tests to evaluate liver function and health",
+      },
+      {
+        name: "Kidney Tests",
+        description: "Tests to assess kidney function and health",
+      },
+      {
+        name: "Heart Tests",
+        description: "Cardiac function and cardiovascular health tests",
+      },
+      {
+        name: "Diabetes Tests",
+        description: "Blood sugar and diabetes monitoring tests",
+      },
+    ];
+    const ws = XLSX.utils.json_to_sheet(sampleData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Categories");
+    XLSX.writeFile(wb, "categories_sample.xlsx");
+  };
+
+  // Excel Import
+  const handleImportExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "binary" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws);
+        if (rows.length === 0) return toast.error("Excel file is empty");
+        setPreviewData(rows);
+        setShowPreview(true);
+      } catch {
+        toast.error("Failed to parse Excel file");
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleConfirmImport = async () => {
+    if (!previewData) return;
+    try {
+      setImporting(true);
+      // Create categories one by one since bulk API might not exist
+      const results = [];
+      for (const row of previewData) {
+        if (row.name) {
+          const formData = new FormData();
+          formData.append("name", row.name);
+          formData.append("description", row.description || "");
+          try {
+            const res = await createCategory(formData);
+            if (res.success) results.push(res);
+          } catch (err) {
+            console.error(`Failed to create category: ${row.name}`, err);
+          }
+        }
+      }
+      if (results.length > 0) {
+        toast.success(`${results.length} categories imported successfully`);
+        setShowPreview(false);
+        setPreviewData(null);
+        fetchCats();
+      } else {
+        toast.error("No categories were imported");
+      }
+    } catch (err) {
+      toast.error("Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -171,6 +263,27 @@ const Categories = () => {
           >
             <MdRefresh size={18} />
           </button>
+          <button
+            onClick={handleDownloadSample}
+            className="flex items-center gap-2 px-4 py-2.5 border rounded-sm hover:bg-black/5 transition-all text-[11px] font-black uppercase tracking-widest"
+            style={{ borderColor: colors.accent + "30", color: colors.text }}
+          >
+            <MdFileDownload size={16} /> Sample File
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2.5 border rounded-sm hover:bg-black/5 transition-all text-[11px] font-black uppercase tracking-widest"
+            style={{ borderColor: colors.accent + "30", color: colors.text }}
+          >
+            <MdUploadFile size={16} /> {importing ? "Importing..." : "Import Excel"}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleImportExcel}
+          />
           <button
             onClick={openAdd}
             className="flex items-center gap-2 px-6 py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest rounded transition-all hover:bg-slate-800"
@@ -332,6 +445,67 @@ const Categories = () => {
           </table>
         )}
       </div>
+
+      {/* Excel Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center bg-slate-50">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Preview Excel Data</h2>
+                <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-medium">
+                  Review before importing &mdash; {previewData?.length} categories found
+                </p>
+              </div>
+              <button onClick={() => setShowPreview(false)} className="text-slate-400 hover:text-slate-600 transition-colors" disabled={importing}>
+                <MdClose size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-slate-100 z-10">
+                  <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-600 border-b">
+                    <th className="px-5 py-3">#</th>
+                    <th className="px-5 py-3">Category Name</th>
+                    <th className="px-5 py-3">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {previewData?.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-3 text-xs text-slate-400 font-bold">{idx + 1}</td>
+                      <td className="px-5 py-3 text-sm font-bold text-slate-800">{row.name || "—"}</td>
+                      <td className="px-5 py-3 text-xs text-slate-500">{row.description || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-5 border-t flex justify-end gap-3 bg-slate-50">
+              <button
+                onClick={() => { setShowPreview(false); setPreviewData(null); }}
+                className="px-6 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200 rounded-lg transition-all"
+                disabled={importing}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmImport}
+                disabled={importing}
+                className="px-8 py-2.5 bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {importing ? (
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Importing...</>
+                ) : (
+                  <><MdUploadFile size={15} /> Confirm Import ({previewData?.length} Categories)</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit Modal */}
       {modalOpen && (

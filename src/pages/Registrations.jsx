@@ -73,36 +73,97 @@ const Registrations = () => {
   const handleDownloadSample = () => {
     const sampleData = [
       {
-        labName: "Sample Lab",
+        // Basic Information
+        labName: "Sample Pathology Lab",
         labType: "Pathology",
         establishmentYear: 2010,
-        registrationNumber: "REG123",
-        description: "Sample description",
-        fullAddress: "123 Main Street",
+        registrationNumber: "REG123456",
+        description: "Complete diagnostic services with modern equipment and experienced staff",
+        
+        // Contact Details
+        phone: "9876543210",
+        email: "lab@example.com",
+        whatsapp: "9876543210",
+        password: "password123",
+        
+        // Owner Information
+        ownerName: "Dr. John Doe",
+        ownerPhone: "9876543211",
+        ownerEmail: "owner@example.com",
+        
+        // Address
+        fullAddress: "123 Main Street, Medical Complex",
         areaName: "Sector 5",
         city: "Delhi",
         state: "Delhi",
         pincode: "110001",
-        phone: "9876543210",
-        email: "lab@example.com",
-        password: "password123",
-        whatsapp: "9876543210",
-        ownerName: "John Doe",
-        ownerPhone: "9876543211",
-        ownerEmail: "owner@example.com",
+        latitude: "28.6139",
+        longitude: "77.2090",
+        
+        // Services (true/false)
         homeCollection: "true",
         is24x7: "false",
         emergency: "false",
         ambulanceService: "false",
+        
+        // Timings
         openTime: "08:00",
         closeTime: "20:00",
         weeklyOff: "Sunday",
+        
+        // Payment Details
         upiId: "lab@upi",
-        bankName: "SBI",
+        bankName: "State Bank of India",
         accountNumber: "1234567890",
         ifscCode: "SBIN0001234",
-        latitude: "28.6139",
-        longitude: "77.2090",
+        
+        // Additional Fields
+        staffCount: "15",
+        source: "admin",
+        status: "true",
+      },
+      {
+        // Second sample with different data
+        labName: "City Diagnostic Center",
+        labType: "Diagnostic Center",
+        establishmentYear: 2015,
+        registrationNumber: "REG789012",
+        description: "Advanced diagnostic center with radiology and pathology services",
+        
+        phone: "9876543220",
+        email: "city@example.com",
+        whatsapp: "9876543220",
+        password: "citylab123",
+        
+        ownerName: "Dr. Jane Smith",
+        ownerPhone: "9876543221",
+        ownerEmail: "jane@example.com",
+        
+        fullAddress: "456 Health Avenue, Medical District",
+        areaName: "Central Zone",
+        city: "Mumbai",
+        state: "Maharashtra",
+        pincode: "400001",
+        latitude: "19.0760",
+        longitude: "72.8777",
+        
+        homeCollection: "true",
+        is24x7: "true",
+        emergency: "true",
+        ambulanceService: "true",
+        
+        openTime: "06:00",
+        closeTime: "22:00",
+        weeklyOff: "",
+        
+        upiId: "citylab@paytm",
+        bankName: "HDFC Bank",
+        accountNumber: "9876543210",
+        ifscCode: "HDFC0001234",
+        
+        staffCount: "25",
+        source: "admin",
+        status: "true",
       },
     ];
     const ws = XLSX.utils.json_to_sheet(sampleData);
@@ -148,7 +209,60 @@ const Registrations = () => {
     if (!previewData) return;
     try {
       setImporting(true);
-      const res = await bulkCreateRegistrations(previewData);
+      
+      // Transform Excel data to match API expectations
+      const transformedData = previewData.map((row) => ({
+        // Basic Information
+        labName: row.labName || "",
+        labType: row.labType || "Pathology",
+        establishmentYear: row.establishmentYear ? parseInt(row.establishmentYear) : null,
+        registrationNumber: row.registrationNumber || "",
+        description: row.description || "",
+        
+        // Contact Details
+        phone: row.phone || "",
+        email: row.email || "",
+        whatsapp: row.whatsapp || "",
+        password: row.password || "defaultpass123",
+        
+        // Owner Information
+        ownerName: row.ownerName || "",
+        ownerPhone: row.ownerPhone || "",
+        ownerEmail: row.ownerEmail || "",
+        
+        // Address
+        fullAddress: row.fullAddress || "",
+        areaName: row.areaName || "",
+        city: row.city || "",
+        state: row.state || "",
+        pincode: row.pincode || "",
+        latitude: row.latitude || "",
+        longitude: row.longitude || "",
+        
+        // Services (convert string to boolean)
+        homeCollection: row.homeCollection === "true" || row.homeCollection === true,
+        is24x7: row.is24x7 === "true" || row.is24x7 === true,
+        emergency: row.emergency === "true" || row.emergency === true,
+        ambulanceService: row.ambulanceService === "true" || row.ambulanceService === true,
+        
+        // Timings
+        openTime: row.openTime || "",
+        closeTime: row.closeTime || "",
+        weeklyOff: row.weeklyOff || "",
+        
+        // Payment Details
+        upiId: row.upiId || "",
+        bankName: row.bankName || "",
+        accountNumber: row.accountNumber || "",
+        ifscCode: row.ifscCode || "",
+        
+        // Additional Fields
+        staffCount: row.staffCount ? parseInt(row.staffCount) : null,
+        source: row.source || "admin",
+        status: row.status === "false" ? false : true, // Default to true unless explicitly false
+      }));
+      
+      const res = await bulkCreateRegistrations(transformedData);
       if (res.success) {
         toast.success(res.message);
         if (res.data?.errors?.length) {
@@ -679,28 +793,98 @@ const Registrations = () => {
             </div>
 
             <div className="flex-1 overflow-auto p-0">
-              <table className="w-full text-left border-collapse min-w-[1200px]">
+              <table className="w-full text-left border-collapse min-w-[1400px]">
                 <thead className="sticky top-0 bg-white shadow-sm z-10">
                   <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-600 border-b">
-                    <th className="px-6 py-4">Lab Name</th>
-                    <th className="px-6 py-4">Owner</th>
-                    <th className="px-6 py-4">Phone</th>
-                    <th className="px-6 py-4">Email</th>
-                    <th className="px-6 py-4">Location (Lat, Long)</th>
-                    <th className="px-6 py-4">Establishment</th>
+                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Lab Details</th>
+                    <th className="px-4 py-3">Owner Info</th>
+                    <th className="px-4 py-3">Contact</th>
+                    <th className="px-4 py-3">Location</th>
+                    <th className="px-4 py-3">Services</th>
+                    <th className="px-4 py-3">Timings</th>
+                    <th className="px-4 py-3">Payment</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {previewData.map((row, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50 transition-all">
-                      <td className="px-6 py-3 text-sm font-bold text-slate-700">{row.labName || '---'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{row.ownerName || '---'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{row.phone || '---'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600 font-medium">{row.email || '---'}</td>
-                      <td className="px-6 py-3 text-[10px] text-slate-400 font-bold">
-                        {row.latitude && row.longitude ? `${row.latitude}, ${row.longitude}` : (row.fullAddress || '---')}
+                      <td className="px-4 py-3 text-xs text-slate-400 font-bold">{idx + 1}</td>
+                      
+                      {/* Lab Details */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="text-sm font-bold text-slate-700">{row.labName || '---'}</div>
+                          <div className="text-[10px] text-slate-500">{row.labType || '---'}</div>
+                          <div className="text-[10px] text-slate-400">Est: {row.establishmentYear || '---'}</div>
+                          <div className="text-[10px] text-blue-600 font-medium">{row.registrationNumber || '---'}</div>
+                        </div>
                       </td>
-                      <td className="px-6 py-3 text-sm text-slate-500">{row.establishmentYear || '---'}</td>
+                      
+                      {/* Owner Info */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-slate-600">{row.ownerName || '---'}</div>
+                          <div className="text-[10px] text-slate-500">{row.ownerPhone || '---'}</div>
+                          <div className="text-[10px] text-slate-500">{row.ownerEmail || '---'}</div>
+                        </div>
+                      </td>
+                      
+                      {/* Contact */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="text-sm text-slate-600">{row.phone || '---'}</div>
+                          <div className="text-[10px] text-slate-500">{row.email || '---'}</div>
+                          <div className="text-[10px] text-green-600">{row.whatsapp || '---'}</div>
+                        </div>
+                      </td>
+                      
+                      {/* Location */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="text-[10px] text-slate-600">{row.city || '---'}, {row.state || '---'}</div>
+                          <div className="text-[10px] text-slate-500">{row.areaName || '---'}</div>
+                          <div className="text-[10px] text-slate-400">{row.pincode || '---'}</div>
+                          {row.latitude && row.longitude && (
+                            <div className="text-[9px] text-blue-500">{row.latitude}, {row.longitude}</div>
+                          )}
+                        </div>
+                      </td>
+                      
+                      {/* Services */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          {(row.homeCollection === 'true' || row.homeCollection === true) && (
+                            <span className="text-[9px] bg-green-100 text-green-700 px-1 py-0.5 rounded">Home Collection</span>
+                          )}
+                          {(row.is24x7 === 'true' || row.is24x7 === true) && (
+                            <span className="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded block mt-1">24x7</span>
+                          )}
+                          {(row.emergency === 'true' || row.emergency === true) && (
+                            <span className="text-[9px] bg-red-100 text-red-700 px-1 py-0.5 rounded block mt-1">Emergency</span>
+                          )}
+                          {(row.ambulanceService === 'true' || row.ambulanceService === true) && (
+                            <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded block mt-1">Ambulance</span>
+                          )}
+                        </div>
+                      </td>
+                      
+                      {/* Timings */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="text-[10px] text-slate-600">{row.openTime || '---'} - {row.closeTime || '---'}</div>
+                          <div className="text-[10px] text-slate-500">Off: {row.weeklyOff || 'None'}</div>
+                        </div>
+                      </td>
+                      
+                      {/* Payment */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="text-[10px] text-slate-600">{row.upiId || '---'}</div>
+                          <div className="text-[10px] text-slate-500">{row.bankName || '---'}</div>
+                          <div className="text-[10px] text-slate-400">{row.ifscCode || '---'}</div>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
