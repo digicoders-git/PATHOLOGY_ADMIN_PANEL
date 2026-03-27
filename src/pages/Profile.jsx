@@ -2,30 +2,27 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { getAdminProfile, updateAdminProfile } from "../apis/auth";
 import { toast } from "react-toastify";
-import Loader from "./ui/Loader";
-import { MdVisibility, MdVisibilityOff, MdLock, MdPerson, MdEmail, MdPhotoCamera ,MdEdit ,MdClose } from "react-icons/md";
+import {
+  MdPerson,
+  MdEmail,
+  MdLock,
+  MdEdit,
+  MdClose,
+  MdPhotoCamera,
+  MdVisibility,
+  MdVisibilityOff,
+  MdSave,
+} from "react-icons/md";
 
 const Profile = () => {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [adminData, setAdminData] = useState({
-    name: "",
-    email: "",
-    profilePhoto: "",
-  });
-  
-  // Security State
-  const [security, setSecurity] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
+  const [adminData, setAdminData] = useState({ name: "", email: "", profilePhoto: "" });
+  const [security, setSecurity] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [showPwd, setShowPwd] = useState({ current: false, new: false, confirm: false });
   const [previewImage, setPreviewImage] = useState(null);
   const [file, setFile] = useState(null);
 
@@ -44,248 +41,328 @@ const Profile = () => {
           profilePhoto: res.data.profilePhoto || "",
         });
       }
-    } catch (error) {
-      toast.error(error.message || "Failed to fetch profile");
+    } catch {
+      toast.error("Failed to fetch profile");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAdminChange = (e) => {
-    setAdminData({ ...adminData, [e.target.name]: e.target.value });
-  };
-
-  const handleSecurityChange = (e) => {
-    setSecurity({ ...security, [e.target.name]: e.target.value });
-  };
-
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setPreviewImage(URL.createObjectURL(selectedFile));
+    const f = e.target.files[0];
+    if (f) {
+      setFile(f);
+      setPreviewImage(URL.createObjectURL(f));
     }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setFile(null);
+    setPreviewImage(null);
+    setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    fetchProfile();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Password Validation
+
     if (security.newPassword || security.confirmPassword || security.currentPassword) {
-      if (!security.currentPassword) {
-        return toast.warning("Current password is required to change password.");
-      }
-      if (security.newPassword !== security.confirmPassword) {
-        return toast.error("New passwords do not match!");
-      }
-      if (security.newPassword.length < 6) {
-        return toast.warning("Password must be at least 6 characters long.");
-      }
+      if (!security.currentPassword) return toast.warning("Current password is required.");
+      if (security.newPassword !== security.confirmPassword) return toast.error("New passwords do not match.");
+      if (security.newPassword.length < 6) return toast.warning("Password must be at least 6 characters.");
     }
 
-    setUpdating(true);
     try {
+      setUpdating(true);
       const formData = new FormData();
       formData.append("name", adminData.name);
       formData.append("email", adminData.email);
-      
       if (security.newPassword) {
-        formData.append("currentPassword", security.currentPassword); 
+        formData.append("currentPassword", security.currentPassword);
         formData.append("password", security.newPassword);
       }
-      
-      if (file) {
-        formData.append("profilePhoto", file);
-      }
+      if (file) formData.append("profilePhoto", file);
 
       const adminId = localStorage.getItem("admin-id");
       const res = await updateAdminProfile(adminId, formData);
-      toast.success(res.message || "Updated successfully!");
-      
-      setIsEditing(false); // Lock fields again
-      setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      toast.success(res.message || "Profile updated successfully");
+      setIsEditing(false);
       setFile(null);
       setPreviewImage(null);
-      fetchProfile(); 
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Update failed. Check your password.");
+      setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      fetchProfile();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Update failed");
     } finally {
       setUpdating(false);
     }
   };
 
-  if (loading) return <div className="flex h-full items-center justify-center"><Loader /></div>;
+  const inputClass = (editable) =>
+    `w-full border rounded-sm px-3 py-2.5 text-sm outline-none transition-all ${
+      editable ? "focus:ring-1" : "opacity-50 cursor-not-allowed"
+    }`;
+
+  const inputStyle = {
+    backgroundColor: colors.background,
+    borderColor: colors.accent + "30",
+    color: colors.text,
+  };
+
+  if (loading)
+    return (
+      <div className="p-6 text-sm opacity-40 font-bold uppercase tracking-widest">
+        Loading profile...
+      </div>
+    );
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8 animate-fadeIn">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8 border-b pb-6">
         <div>
-           <h2 className="text-3xl font-black text-slate-800 tracking-tight leading-none italic uppercase">Account Management</h2>
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 ml-1">Personal Identity & Security Settings</p>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: colors.text }}>
+            Profile Settings
+          </h1>
+          <p className="text-sm mt-1 opacity-50">Manage your account identity and security</p>
         </div>
-        {!isEditing ? (
-           <button 
+
+        <div className="flex gap-3">
+          {!isEditing ? (
+            <button
               onClick={() => setIsEditing(true)}
-              className="px-8 py-3 bg-white border-2 border-slate-900 text-slate-900 text-[10px] font-black rounded-2xl hover:bg-slate-900 hover:text-white transition-all shadow-xl uppercase tracking-widest flex items-center gap-2"
-           >
-              <MdEdit size={18} /> Edit Profile
-           </button>
-        ) : (
-           <div className="flex gap-3">
-              <button 
-                 onClick={() => { setIsEditing(false); setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" }); }}
-                 className="px-6 py-3 bg-red-50 text-red-600 text-[10px] font-black rounded-2xl hover:bg-red-100 transition-all shadow-sm uppercase tracking-widest flex items-center gap-2 border border-red-200"
+              className="flex items-center gap-2 px-6 py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest rounded transition-all hover:bg-slate-800"
+            >
+              <MdEdit size={16} /> Edit Profile
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCancel}
+                className="flex items-center gap-2 px-5 py-2.5 border rounded text-[11px] font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
+                style={{ borderColor: colors.accent + "30", color: colors.text }}
               >
-                 <MdClose size={18} /> Cancel
+                <MdClose size={16} /> Cancel
               </button>
-              <button 
-                 form="profile-form"
-                 type="submit"
-                 disabled={updating}
-                 className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black rounded-2xl hover:bg-slate-800 transition-all shadow-xl uppercase tracking-widest flex items-center gap-2"
+              <button
+                form="profile-form"
+                type="submit"
+                disabled={updating}
+                className="flex items-center gap-2 px-6 py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest rounded transition-all hover:bg-slate-800 disabled:opacity-40"
               >
-                 {updating ? "Saving..." : "Save Changes"}
+                <MdSave size={16} /> {updating ? "Saving..." : "Save Changes"}
               </button>
-           </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Profile Card */}
-        <div className="lg:col-span-1 space-y-8">
-           <div className={`bg-white rounded-[40px] shadow-2xl border-t-8 border-slate-800 overflow-hidden text-center p-10 relative group ${!isEditing ? "opacity-90" : ""}`}>
-              <div className="relative z-10">
-                 <div className="relative w-32 h-32 mx-auto mb-6">
-                    <img
-                      src={previewImage || adminData.profilePhoto || "https://ui-avatars.com/api/?name=" + adminData.name + "&background=random"}
-                      alt="Profile"
-                      className={`w-full h-full object-cover rounded-[35px] border-4 border-white shadow-xl transition-all ${!isEditing ? "grayscale-[50%]" : ""}`}
+      <form id="profile-form" onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Left — Avatar Card */}
+          <div
+            className="rounded-sm border shadow-sm p-6 flex flex-col items-center gap-4"
+            style={{ backgroundColor: colors.background, borderColor: colors.accent + "20" }}
+          >
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-28 h-28 rounded-sm overflow-hidden border-2"
+                style={{ borderColor: colors.accent + "20" }}>
+                <img
+                  src={
+                    previewImage ||
+                    adminData.profilePhoto ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(adminData.name || "Admin")}&background=111&color=fff&size=128`
+                  }
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              {isEditing && (
+                <label className="absolute -bottom-2 -right-2 p-2 bg-black text-white rounded-sm cursor-pointer hover:bg-slate-700 transition-all">
+                  <MdPhotoCamera size={16} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                </label>
+              )}
+            </div>
+
+            {/* Name & Role */}
+            <div className="text-center">
+              <p className="text-sm font-bold" style={{ color: colors.text }}>{adminData.name || "Admin"}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1">Administrator</p>
+            </div>
+
+            {/* Status Badge */}
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-sm bg-emerald-100 text-emerald-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+              Logged In
+            </span>
+
+            {isEditing && (
+              <p className="text-[10px] opacity-40 text-center font-bold uppercase tracking-widest">
+                Click camera icon to change photo
+              </p>
+            )}
+          </div>
+
+          {/* Right — Forms */}
+          <div className="lg:col-span-2 flex flex-col gap-6">
+
+            {/* Basic Info */}
+            <div
+              className="rounded-sm border shadow-sm overflow-hidden"
+              style={{ backgroundColor: colors.background, borderColor: colors.accent + "20" }}
+            >
+              <div
+                className="px-5 py-4 border-b flex items-center gap-2"
+                style={{ borderColor: colors.accent + "10", backgroundColor: colors.accent + "05" }}
+              >
+                <MdPerson size={16} className="opacity-50" />
+                <span className="text-xs font-black uppercase tracking-wider opacity-60">Basic Information</span>
+              </div>
+
+              <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-[10px] font-black uppercase opacity-40 block mb-2">Full Name</label>
+                  <input
+                    disabled={!isEditing}
+                    name="name"
+                    value={adminData.name}
+                    onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
+                    className={inputClass(isEditing)}
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase opacity-40 block mb-2">Email Address</label>
+                  <input
+                    disabled={!isEditing}
+                    name="email"
+                    type="email"
+                    value={adminData.email}
+                    onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
+                    className={inputClass(isEditing)}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Security */}
+            <div
+              className="rounded-sm border shadow-sm overflow-hidden"
+              style={{ backgroundColor: colors.background, borderColor: colors.accent + "20" }}
+            >
+              <div
+                className="px-5 py-4 border-b flex items-center gap-2"
+                style={{ borderColor: colors.accent + "10", backgroundColor: colors.accent + "05" }}
+              >
+                <MdLock size={16} className="opacity-50" />
+                <span className="text-xs font-black uppercase tracking-wider opacity-60">Change Password</span>
+                <span className="text-[9px] font-bold opacity-30 ml-1">(optional — leave blank to keep current)</span>
+              </div>
+
+              <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
+                {/* Current Password */}
+                <div>
+                  <label className="text-[10px] font-black uppercase opacity-40 block mb-2">Current Password</label>
+                  <div className="relative">
+                    <input
+                      disabled={!isEditing}
+                      type={showPwd.current ? "text" : "password"}
+                      name="currentPassword"
+                      value={security.currentPassword}
+                      onChange={(e) => setSecurity({ ...security, currentPassword: e.target.value })}
+                      placeholder={isEditing ? "Enter current" : "••••••••"}
+                      className={inputClass(isEditing) + " pr-10"}
+                      style={inputStyle}
                     />
                     {isEditing && (
-                       <label className="absolute bottom-[-10px] right-[-10px] p-3 bg-blue-600 text-white rounded-2xl cursor-pointer hover:bg-blue-700 transition-all shadow-lg animate-bounce">
-                          <MdPhotoCamera size={20} />
-                          <input type="file" className="hidden" onChange={handleFileChange} />
-                       </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((p) => ({ ...p, current: !p.current }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                      >
+                        {showPwd.current ? <MdVisibilityOff size={16} /> : <MdVisibility size={16} />}
+                      </button>
                     )}
-                 </div>
-                 <h4 className="text-xl font-black text-slate-800 uppercase tracking-tighter">{adminData.name}</h4>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Administrator Access</p>
-                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div> Logged In
-                 </div>
-              </div>
-           </div>
-        </div>
+                  </div>
+                </div>
 
-        {/* Edit Section */}
-        <div className="lg:col-span-2 space-y-8">
-           <form id="profile-form" onSubmit={handleSubmit} className="space-y-8">
-              {/* Identity Section */}
-              <div className={`bg-white rounded-[40px] shadow-2xl border border-slate-100 p-10 transition-all ${!isEditing ? "bg-slate-50/50 grayscale-[20%]" : "ring-4 ring-blue-50"}`}>
-                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><MdPerson size={24} /></div>
-                    <div>
-                       <h3 className="text-[12px] font-black uppercase tracking-widest text-slate-800">Basic Information</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mt-1">{isEditing ? "Modify your identity" : "Identity is currently locked"}</p>
-                    </div>
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                       <input 
-                          disabled={!isEditing}
-                          name="name"
-                          value={adminData.name}
-                          onChange={handleAdminChange}
-                          className={`w-full p-4 bg-slate-50 border-none rounded-2xl text-[11px] font-black outline-none transition-all shadow-inner ${isEditing ? "focus:bg-white border-l-4 border-blue-500" : "cursor-not-allowed text-slate-400"}`} 
-                       />
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email System Address</label>
-                       <input 
-                          disabled={!isEditing}
-                          name="email"
-                          value={adminData.email}
-                          onChange={handleAdminChange}
-                          className={`w-full p-4 bg-slate-50 border-none rounded-2xl text-[11px] font-black outline-none transition-all shadow-inner ${isEditing ? "focus:bg-white border-l-4 border-blue-500" : "cursor-not-allowed text-slate-400" }`} 
-                       />
-                    </div>
-                 </div>
-              </div>
+                {/* New Password */}
+                <div>
+                  <label className="text-[10px] font-black uppercase opacity-40 block mb-2">New Password</label>
+                  <div className="relative">
+                    <input
+                      disabled={!isEditing}
+                      type={showPwd.new ? "text" : "password"}
+                      name="newPassword"
+                      value={security.newPassword}
+                      onChange={(e) => setSecurity({ ...security, newPassword: e.target.value })}
+                      placeholder={isEditing ? "Min 6 characters" : "••••••••"}
+                      className={inputClass(isEditing) + " pr-10"}
+                      style={inputStyle}
+                    />
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((p) => ({ ...p, new: !p.new }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                      >
+                        {showPwd.new ? <MdVisibilityOff size={16} /> : <MdVisibility size={16} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-              {/* Security Section (Always editable or only when editing?) User said "edit karne par active ho jaye" so I'll follow the same for all. */}
-              <div className={`bg-white rounded-[40px] shadow-2xl border border-slate-100 p-10 border-l-8 border-slate-900 transition-all ${!isEditing ? "bg-slate-50/50" : ""}`}>
-                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
-                    <div className="p-3 bg-slate-100 text-slate-900 rounded-2xl"><MdLock size={24} /></div>
-                    <div>
-                       <h3 className="text-[12px] font-black uppercase tracking-widest text-slate-800">Security Credentials</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mt-1">Change Access Password</p>
-                    </div>
-                 </div>
-                 <div className="space-y-6">
-                    <div className="relative space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-red-500 italic">Verify Current Password</label>
-                       <input 
-                          disabled={!isEditing}
-                          type={showCurrent ? "text" : "password"}
-                          name="currentPassword"
-                          value={security.currentPassword}
-                          onChange={handleSecurityChange}
-                          placeholder={isEditing ? "REQUIRED TO COMMIT CHANGES" : "••••••••••••"}
-                          className={`w-full p-4 pr-12 bg-slate-50 border-none rounded-2xl text-[11px] font-black outline-none transition-all shadow-inner ${isEditing ? "focus:bg-white" : "cursor-not-allowed"}`} 
-                       />
-                       {isEditing && (
-                          <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-4 top-[38px] text-slate-400 hover:text-slate-900 transition-all">{showCurrent ? <MdVisibilityOff size={20} /> : <MdVisibility size={20} />}</button>
-                       )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                       <div className="relative space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Password</label>
-                          <input 
-                             disabled={!isEditing}
-                             type={showNew ? "text" : "password"}
-                             name="newPassword"
-                             value={security.newPassword}
-                             onChange={handleSecurityChange}
-                             placeholder={isEditing ? "••••••••" : "••••••••"}
-                             className={`w-full p-4 pr-12 bg-slate-50 border-none rounded-2xl text-[11px] font-black outline-none transition-all shadow-inner ${isEditing ? "focus:bg-white" : "cursor-not-allowed"}`} 
-                          />
-                          {isEditing && (
-                             <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-4 top-[38px] text-slate-400 hover:text-slate-900 transition-all">{showNew ? <MdVisibilityOff size={20} /> : <MdVisibility size={20} />}</button>
-                          )}
-                       </div>
-                       <div className="relative space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm Identity</label>
-                          <input 
-                             disabled={!isEditing}
-                             type={showConfirm ? "text" : "password"}
-                             name="confirmPassword"
-                             value={security.confirmPassword}
-                             onChange={handleSecurityChange}
-                             placeholder={isEditing ? "••••••••" : "••••••••"}
-                             className={`w-full p-4 pr-12 bg-slate-50 border-none rounded-2xl text-[11px] font-black outline-none transition-all shadow-inner ${isEditing ? "focus:bg-white" : "cursor-not-allowed" }`} 
-                          />
-                          {isEditing && (
-                             <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-4 top-[38px] text-slate-400 hover:text-slate-900 transition-all">{showConfirm ? <MdVisibilityOff size={20} /> : <MdVisibility size={20} />}</button>
-                          )}
-                       </div>
-                    </div>
-                 </div>
+                {/* Confirm Password */}
+                <div>
+                  <label className="text-[10px] font-black uppercase opacity-40 block mb-2">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      disabled={!isEditing}
+                      type={showPwd.confirm ? "text" : "password"}
+                      name="confirmPassword"
+                      value={security.confirmPassword}
+                      onChange={(e) => setSecurity({ ...security, confirmPassword: e.target.value })}
+                      placeholder={isEditing ? "Repeat new password" : "••••••••"}
+                      className={inputClass(isEditing) + " pr-10"}
+                      style={inputStyle}
+                    />
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((p) => ({ ...p, confirm: !p.confirm }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                      >
+                        {showPwd.confirm ? <MdVisibilityOff size={16} /> : <MdVisibility size={16} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {isEditing && (
-                 <button 
-                    type="submit" 
-                    disabled={updating}
-                    className="w-full py-5 bg-slate-900 text-white rounded-[25px] font-black text-[11px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl border-b-8 border-slate-700 active:border-b-0 active:translate-y-2 disabled:opacity-50"
-                 >
-                    {updating ? "Syncing Identity..." : "Commit Life Changes"}
-                 </button>
+              {/* Password match indicator */}
+              {isEditing && security.newPassword && security.confirmPassword && (
+                <div className="px-5 pb-4">
+                  {security.newPassword === security.confirmPassword ? (
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                      ✓ Passwords match
+                    </p>
+                  ) : (
+                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">
+                      ✗ Passwords do not match
+                    </p>
+                  )}
+                </div>
               )}
-           </form>
+            </div>
+
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

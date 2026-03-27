@@ -125,6 +125,11 @@ const Dashboard = () => {
       path: "/dashboard/bookings",
     },
     {
+      name: "Slot Management",
+      icon: MdAlarm,
+      path: "/dashboard/slots",
+    },
+    {
       name: "Parents",
       icon: MdFamilyRestroom,
       path: "/dashboard/parents",

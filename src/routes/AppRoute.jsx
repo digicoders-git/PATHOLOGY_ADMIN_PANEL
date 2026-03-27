@@ -11,6 +11,7 @@ const EditRegistration = React.lazy(() => import("../pages/EditRegistration"));
 const Plans = React.lazy(() => import("../pages/Plans"));
 const Patients = React.lazy(() => import("../pages/Patients"));
 const Bookings = React.lazy(() => import("../pages/Bookings"));
+const Slots = React.lazy(() => import("../pages/Slots"));
 
 export const AppRoute = [
   { path: "profile", component: Profile },
@@ -24,4 +25,5 @@ export const AppRoute = [
   { path: "patients", component: Patients },
   { path: "plans", component: Plans },
   { path: "bookings", component: Bookings },
+  { path: "slots", component: Slots },
 ];
