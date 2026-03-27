@@ -48,3 +48,8 @@ export const bulkCreateRegistrations = async (labs) => {
   const response = await api.post("/registrations/bulk-create", { labs });
   return response.data;
 };
+
+export const toggleFeatured = async (id) => {
+  const response = await api.patch(`/registrations/featured/${id}`);
+  return response.data;
+};

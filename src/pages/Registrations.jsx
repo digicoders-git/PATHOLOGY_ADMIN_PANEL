@@ -6,6 +6,7 @@ import {
   updateRegistrationStatus,
   deleteRegistration,
   bulkCreateRegistrations,
+  toggleFeatured,
 } from "../apis/registration";
 import { toast } from "react-toastify";
 import {
@@ -17,6 +18,8 @@ import {
   MdEdit,
   MdFileDownload,
   MdUploadFile,
+  MdStar,
+  MdStarOutline,
 } from "react-icons/md";
 import * as XLSX from "xlsx";
 import Loader from "./ui/Loader";
@@ -63,6 +66,7 @@ const Registrations = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [featuringId, setFeaturingId] = useState(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -272,6 +276,37 @@ const Registrations = () => {
     navigate(`/dashboard/edit-registration/${id}`);
   };
 
+  const handleToggleFeatured = async (id, current) => {
+    const result = await Swal.fire({
+      title: current ? "Remove from Featured?" : "Mark as Featured?",
+      text: current
+        ? "This lab will no longer appear at the top of listings."
+        : "This lab will be promoted to the top of all listings.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#111",
+      cancelButtonColor: "#d33",
+      confirmButtonText: current ? "Yes, remove it!" : "Yes, feature it!",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      setFeaturingId(id);
+      const res = await toggleFeatured(id);
+      if (res.success) {
+        toast.success(res.message);
+        setData((prev) =>
+          prev.map((item) =>
+            item._id === id ? { ...item, isFeatured: res.isFeatured } : item
+          )
+        );
+      }
+    } catch {
+      toast.error("Failed to update featured status");
+    } finally {
+      setFeaturingId(null);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8 border-b pb-6">
@@ -451,6 +486,9 @@ const Registrations = () => {
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
                   Status
                 </th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
+                  Featured
+                </th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-right">
                   Actions
                 </th>
@@ -459,13 +497,13 @@ const Registrations = () => {
             <tbody className="divide-y divide-black/5">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="py-20 text-center">
+                  <td colSpan="8" className="py-20 text-center">
                     <Loader />
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-20 text-center opacity-40">
+                  <td colSpan="8" className="py-20 text-center opacity-40">
                     No registrations found
                   </td>
                 </tr>
@@ -528,10 +566,24 @@ const Registrations = () => {
                       <Toggle
                         checked={item.status}
                         loading={togglingId === item._id}
-                        onChange={() =>
-                          handleStatusToggle(item._id, item.status)
-                        }
+                        onChange={() => handleStatusToggle(item._id, item.status)}
                       />
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleToggleFeatured(item._id, item.isFeatured)}
+                        disabled={featuringId === item._id}
+                        title={item.isFeatured ? "Remove from Featured" : "Mark as Featured"}
+                        className="transition-all disabled:opacity-40"
+                      >
+                        {featuringId === item._id ? (
+                          <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                        ) : item.isFeatured ? (
+                          <MdStar size={22} className="text-amber-400" />
+                        ) : (
+                          <MdStarOutline size={22} className="opacity-25 hover:opacity-70 hover:text-amber-400 transition-all" />
+                        )}
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
