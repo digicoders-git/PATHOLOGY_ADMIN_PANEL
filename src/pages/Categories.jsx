@@ -250,7 +250,7 @@ const Categories = () => {
 
                     {/* Actions */}
                     <td className="px-5 py-3.5 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2">
                         <button
                           onClick={() => openEdit(cat)}
                           className="p-2 rounded-sm hover:bg-black/5 transition-colors"

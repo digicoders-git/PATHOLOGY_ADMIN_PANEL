@@ -312,7 +312,7 @@ const TestsServices = () => {
                       </td>
                       {/* Actions */}
                       <td className="px-5 py-3.5">
-                        <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex justify-end gap-1.5">
                           <button onClick={() => handleEdit(item)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
                             <MdEdit size={15} />
                           </button>

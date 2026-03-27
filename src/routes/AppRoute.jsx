@@ -12,6 +12,9 @@ const Plans = React.lazy(() => import("../pages/Plans"));
 const Patients = React.lazy(() => import("../pages/Patients"));
 const Bookings = React.lazy(() => import("../pages/Bookings"));
 const Slots = React.lazy(() => import("../pages/Slots"));
+const LabTestPricing = React.lazy(() => import("../pages/LabTestPricing"));
+const ManagePackages = React.lazy(() => import("../pages/ManagePackages"));
+const Notifications = React.lazy(() => import("../pages/Notifications"));
 
 export const AppRoute = [
   { path: "profile", component: Profile },
@@ -26,4 +29,7 @@ export const AppRoute = [
   { path: "plans", component: Plans },
   { path: "bookings", component: Bookings },
   { path: "slots", component: Slots },
+  { path: "lab-test-pricing", component: LabTestPricing },
+  { path: "manage-packages", component: ManagePackages },
+  { path: "notifications", component: Notifications },
 ];

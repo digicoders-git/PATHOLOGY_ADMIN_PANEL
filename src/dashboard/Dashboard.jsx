@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -27,7 +27,8 @@ import {
   MdDirectionsBike,
   MdPictureAsPdf,
   MdFamilyRestroom,
-  MdCreditCard
+  MdCreditCard,
+  MdDoneAll,
 } from "react-icons/md";
 
 import { Clock } from "./Clock";
@@ -35,6 +36,7 @@ import logoo from "../assets/logo.png";
 import landLogoo from "../assets/landLogoo.png";
 import { Settings, ChevronDown } from "lucide-react";
 import Swal from "sweetalert2";
+import { getUnreadCount, getNotifications, markAsRead, markAllAsRead } from "../apis/notifications";
 
 const Dashboard = () => {
   const { colors, isDarkMode, toggleTheme, currentTheme, themes, setTheme } =
@@ -42,6 +44,10 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [recentNotifs, setRecentNotifs] = useState([]);
+  const notifRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -51,6 +57,41 @@ const Dashboard = () => {
       navigate("/");
     }
   }, [navigate]);
+
+  // Fetch unread count every 30 seconds
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await getUnreadCount();
+        if (res.success) setUnreadCount(res.unreadCount || 0);
+      } catch {}
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch recent notifications for dropdown
+  const fetchRecentNotifs = async () => {
+    try {
+      const res = await getNotifications({ page: 1, limit: 6 });
+      if (res.success) {
+        setRecentNotifs(res.data || []);
+        setUnreadCount(res.unreadCount || 0);
+      }
+    } catch {}
+  };
+
+  // Close notif dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     Swal.fire({
@@ -144,7 +185,18 @@ const Dashboard = () => {
       icon: MdCreditCard,
       path: "/dashboard/plans",
     },
+    {
+      name: "Lab Test Pricing",
+      icon: MdPayments,
+      path: "/dashboard/lab-test-pricing",
+    },
+    {
+      name: "Packages",
+      icon: MdOutlineCollections,
+      path: "/dashboard/manage-packages",
+    },
     { name: "Profile", icon: MdPerson, path: "/dashboard/profile" },
+    { name: "Notifications", icon: MdNotifications, path: "/dashboard/notifications" },
   ];
 
   const themeOptions = [
@@ -469,23 +521,110 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4 flex-1 justify-end">
+            {/* Notification Bell */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => { setNotifOpen((p) => !p); if (!notifOpen) fetchRecentNotifs(); }}
+                className="relative p-2 cursor-pointer rounded-lg transition-colors"
+                style={{ color: colors.primary }}
+              >
+                <MdNotifications className="w-5 h-5 md:w-6 md:h-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {notifOpen && (
+                <div
+                  className="absolute right-0 top-12 w-80 rounded-sm border shadow-2xl z-50 overflow-hidden"
+                  style={{ backgroundColor: colors.background, borderColor: colors.accent + "20" }}
+                >
+                  {/* Dropdown Header */}
+                  <div
+                    className="px-4 py-3 border-b flex items-center justify-between"
+                    style={{ borderColor: colors.accent + "15", backgroundColor: colors.accent + "05" }}
+                  >
+                    <span className="text-xs font-black uppercase tracking-widest" style={{ color: colors.text }}>
+                      Notifications {unreadCount > 0 && <span className="text-red-500">({unreadCount})</span>}
+                    </span>
+                    <div className="flex gap-2">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={async () => { await markAllAsRead(); fetchRecentNotifs(); }}
+                          className="text-[10px] font-black uppercase opacity-50 hover:opacity-100 transition-all flex items-center gap-1"
+                          style={{ color: colors.primary }}
+                        >
+                          <MdDoneAll size={13} /> All Read
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notif List */}
+                  <div className="max-h-72 overflow-y-auto">
+                    {recentNotifs.length === 0 ? (
+                      <div className="py-10 text-center text-xs opacity-30">No notifications</div>
+                    ) : (
+                      recentNotifs.map((n) => (
+                        <div
+                          key={n._id}
+                          onClick={async () => {
+                            if (!n.isRead) {
+                              await markAsRead(n._id);
+                              fetchRecentNotifs();
+                            }
+                            if (n.link) navigate(n.link);
+                            setNotifOpen(false);
+                          }}
+                          className={`flex items-start gap-3 px-4 py-3 cursor-pointer border-b transition-colors hover:bg-black/5 ${
+                            !n.isRead ? "bg-blue-50/50" : ""
+                          }`}
+                          style={{ borderColor: colors.accent + "08" }}
+                        >
+                          {!n.isRead && (
+                            <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                          )}
+                          {n.isRead && <span className="w-2 h-2 shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-bold truncate ${!n.isRead ? "" : "opacity-50"}`} style={{ color: colors.text }}>
+                              {n.title}
+                            </p>
+                            <p className="text-[10px] opacity-40 truncate">{n.message}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div
+                    className="px-4 py-2.5 border-t text-center"
+                    style={{ borderColor: colors.accent + "15" }}
+                  >
+                    <button
+                      onClick={() => { navigate("/dashboard/notifications"); setNotifOpen(false); }}
+                      className="text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100 transition-all"
+                      style={{ color: colors.primary }}
+                    >
+                      View All Notifications →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-2  cursor-pointer rounded-lg transition-colors"
-              onMouseEnter={(e) =>
-                (e.target.style.backgroundColor = colors.primary + "20")
-              }
-              onMouseLeave={(e) =>
-                (e.target.style.backgroundColor = "transparent")
-              }
+              className="p-2 cursor-pointer rounded-lg transition-colors"
+              onMouseEnter={(e) => (e.target.style.backgroundColor = colors.primary + "20")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
               style={{ color: colors.primary }}
             >
               <Settings className="w-5 h-5 md:w-6 md:h-6" />
             </button>
-            {/* <div className='w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center'
-                 style={{ backgroundColor: colors.accent }}>
-              <span className='text-white font-semibold text-sm'><img src={logoo} alt="logo" className='rounded-full' /></span>
-            </div> */}
           </div>
         </header>
 
