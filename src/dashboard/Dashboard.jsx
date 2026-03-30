@@ -29,6 +29,7 @@ import {
   MdFamilyRestroom,
   MdCreditCard,
   MdDoneAll,
+  MdLocalOffer,
 } from "react-icons/md";
 
 import { Clock } from "./Clock";
@@ -180,6 +181,8 @@ const Dashboard = () => {
       icon: MdPerson,
       path: "/dashboard/patients",
     },
+        { name: "Offers & Banners", icon: MdLocalOffer, path: "/dashboard/offers" },
+
     {
       name: "Plans",
       icon: MdCreditCard,

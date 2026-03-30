@@ -15,6 +15,7 @@ const Slots = React.lazy(() => import("../pages/Slots"));
 const LabTestPricing = React.lazy(() => import("../pages/LabTestPricing"));
 const ManagePackages = React.lazy(() => import("../pages/ManagePackages"));
 const Notifications = React.lazy(() => import("../pages/Notifications"));
+const Offers = React.lazy(() => import("../pages/Offers"));
 
 export const AppRoute = [
   { path: "profile", component: Profile },
@@ -32,4 +33,5 @@ export const AppRoute = [
   { path: "lab-test-pricing", component: LabTestPricing },
   { path: "manage-packages", component: ManagePackages },
   { path: "notifications", component: Notifications },
+  { path: "offers", component: Offers },
 ];
