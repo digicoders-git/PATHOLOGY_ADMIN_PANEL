@@ -25,8 +25,6 @@ export const deleteBooking = async (id) => {
 export const uploadTestReport = async (id, file) => {
   const formData = new FormData();
   formData.append("testReport", file);
-  const response = await api.post(`${BASE_URL}/upload-report/${id}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const response = await api.post(`${BASE_URL}/upload-report/${id}`, formData);
   return response.data;
 };

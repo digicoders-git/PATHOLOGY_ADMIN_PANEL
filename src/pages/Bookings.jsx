@@ -97,8 +97,10 @@ const handleDelete = (id) => {
     if (!file) return;
     try {
       const res = await uploadTestReport(id, file);
-      if (res.success) { toast.success("Report uploaded"); fetchData(); }
-    } catch { toast.error("Upload failed"); }
+      if (res.success) { toast.success("Report uploaded successfully"); fetchData(); }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Upload failed");
+    }
   };
 
   const clearFilters = () => {
