@@ -431,10 +431,20 @@ const Registrations = () => {
       const res = await toggleFeatured(id);
       if (res.success) {
         toast.success(res.message);
+        // Update individual tab data
         setData((prev) =>
           prev.map((item) =>
             item._id === id ? { ...item, isFeatured: res.isFeatured } : item
           )
+        );
+        // Update parent tab data
+        setParentData((prev) =>
+          prev.map((parent) => ({
+            ...parent,
+            labs: parent.labs.map((lab) =>
+              lab._id === id ? { ...lab, isFeatured: res.isFeatured } : lab
+            ),
+          }))
         );
       }
     } catch {
@@ -733,8 +743,18 @@ const Registrations = () => {
                                             {lab.status ? "Active" : "Inactive"}
                                           </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                      <td className="px-4 py-3 text-right">
                                           <div className="flex justify-end gap-1">
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); handleToggleFeatured(lab._id, lab.isFeatured); }}
+                                              disabled={featuringId === lab._id}
+                                              className="p-1.5 rounded transition-all" title={lab.isFeatured ? "Remove Featured" : "Mark Featured"}>
+                                              {featuringId === lab._id
+                                                ? <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                                : lab.isFeatured
+                                                  ? <MdStar size={16} className="text-amber-400" />
+                                                  : <MdStarOutline size={16} className="opacity-30 hover:opacity-70 hover:text-amber-400" />}
+                                            </button>
                                             <button onClick={(e) => { e.stopPropagation(); viewDetails(lab._id); }}
                                               className="p-1.5 rounded hover:bg-black/5 opacity-60 hover:opacity-100 transition-all" title="View">
                                               <MdVisibility size={16} />
