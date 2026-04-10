@@ -8,6 +8,7 @@ import {
   bulkCreateRegistrations,
   toggleFeatured,
 } from "../apis/registration";
+import { getAllParentsWithLabs } from "../apis/parent";
 import { toast } from "react-toastify";
 import {
   MdDelete,
@@ -20,6 +21,8 @@ import {
   MdUploadFile,
   MdStar,
   MdStarOutline,
+  MdKeyboardArrowDown,
+  MdOutlineScience,
 } from "react-icons/md";
 import * as XLSX from "xlsx";
 import Loader from "./ui/Loader";
@@ -69,6 +72,22 @@ const Registrations = () => {
   const [featuringId, setFeaturingId] = useState(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Parent grouped data
+  const [parentData, setParentData] = useState([]);
+  const [parentLoading, setParentLoading] = useState(false);
+  const [expandedParentId, setExpandedParentId] = useState(null);
+  const [parentPagination, setParentPagination] = useState({ page: 1, totalPages: 1 });
+  const [parentPage, setParentPage] = useState(1);
+
+  const fetchParentData = useCallback(async () => {
+    try {
+      setParentLoading(true);
+      const res = await getAllParentsWithLabs({ page: parentPage, limit: 10, search });
+      if (res.success) { setParentData(res.data); setParentPagination(res.pagination); }
+    } catch { toast.error("Failed to fetch parent data"); }
+    finally { setParentLoading(false); }
+  }, [parentPage, search]);
 
   const handleDownloadSample = () => {
     const sampleData = [
@@ -332,6 +351,10 @@ const Registrations = () => {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    if (regType === "parent") fetchParentData();
+  }, [regType, fetchParentData]);
+
   const handleStatusToggle = useCallback(async (id, currentStatus) => {
     try {
       setTogglingId(id);
@@ -579,7 +602,170 @@ const Registrations = () => {
         }}
       >
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          {regType === "parent" ? (
+            /* ── PARENT GROUPED VIEW ── */
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr style={{ backgroundColor: colors.accent + "05" }}>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 w-10"></th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">#</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">Parent Name</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">Total Labs</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5">
+                {parentLoading ? (
+                  <tr><td colSpan="5" className="py-20 text-center"><Loader /></td></tr>
+                ) : parentData.length === 0 ? (
+                  <tr><td colSpan="5" className="py-20 text-center opacity-40">No parent registrations found</td></tr>
+                ) : (
+                  parentData.map((parent, index) => (
+                    <React.Fragment key={parent._id}>
+                      {/* Parent Row */}
+                      <tr
+                        className="hover:bg-black/5 transition-colors cursor-pointer"
+                        style={expandedParentId === parent._id ? { backgroundColor: colors.accent + "08" } : {}}
+                        onClick={() => setExpandedParentId(expandedParentId === parent._id ? null : parent._id)}
+                      >
+                        <td className="px-6 py-4">
+                          <MdKeyboardArrowDown
+                            size={20}
+                            className="transition-transform duration-200"
+                            style={{
+                              color: colors.primary,
+                              transform: expandedParentId === parent._id ? "rotate(0deg)" : "rotate(-90deg)"
+                            }}
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium opacity-40">
+                          {(parentPagination.page - 1) * 10 + index + 1}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-bold" style={{ color: colors.text }}>{parent.name}</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold">
+                            {parent.labCount || 0} LABS
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                            parent.status ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"
+                          }`}>
+                            {parent.status ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                      </tr>
+
+                      {/* Expanded Labs */}
+                      {expandedParentId === parent._id && (
+                        <tr>
+                          <td colSpan={5} className="px-10 py-5" style={{ backgroundColor: colors.accent + "04" }}>
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-4 flex items-center gap-2">
+                              <MdOutlineScience size={13} /> Labs under {parent.name}
+                            </p>
+                            {parent.labCount === 0 ? (
+                              <p className="text-xs text-slate-300 italic">No labs registered under this parent.</p>
+                            ) : (
+                              <div className="overflow-x-auto rounded-lg border border-slate-100">
+                                <table className="w-full text-left border-collapse min-w-[900px]">
+                                  <thead>
+                                    <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-b">
+                                      <th className="px-4 py-2.5">#</th>
+                                      <th className="px-4 py-2.5">Lab</th>
+                                      <th className="px-4 py-2.5">Type</th>
+                                      <th className="px-4 py-2.5">Location</th>
+                                      <th className="px-4 py-2.5">Contact</th>
+                                      <th className="px-4 py-2.5">Owner</th>
+                                      <th className="px-4 py-2.5 text-center">Services</th>
+                                      <th className="px-4 py-2.5 text-center">Status</th>
+                                      <th className="px-4 py-2.5 text-right">Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100 bg-white">
+                                    {parent.labs.map((lab, idx) => (
+                                      <tr key={lab._id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-4 py-3 text-xs text-slate-400 font-bold">{idx + 1}</td>
+                                        <td className="px-4 py-3">
+                                          <div className="flex items-center gap-2.5">
+                                            {lab.labLogo ? (
+                                              <img src={lab.labLogo} className="w-8 h-8 rounded object-cover shrink-0 border border-slate-100" alt="" />
+                                            ) : (
+                                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center shrink-0">
+                                                <MdOutlineScience size={14} className="text-slate-400" />
+                                              </div>
+                                            )}
+                                            <div>
+                                              <p className="text-xs font-bold text-slate-800">{lab.labName}</p>
+                                              <p className="text-[10px] text-slate-400">{lab.registrationNumber || "—"}</p>
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <span className="text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">{lab.labType || "—"}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <p className="text-xs font-semibold text-slate-600">{lab.city || "—"}, {lab.state || "—"}</p>
+                                          <p className="text-[10px] text-slate-400">{lab.pincode || ""}</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <p className="text-xs text-slate-600">{lab.phone || "—"}</p>
+                                          <p className="text-[10px] text-slate-400 truncate max-w-[130px]">{lab.email || ""}</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <p className="text-xs font-semibold text-slate-600">{lab.ownerName || "—"}</p>
+                                          <p className="text-[10px] text-slate-400">{lab.ownerPhone || ""}</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <div className="flex flex-wrap gap-1 justify-center">
+                                            {lab.homeCollection && <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">Home</span>}
+                                            {lab.is24x7 && <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">24x7</span>}
+                                            {lab.emergency && <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">Emergency</span>}
+                                            {lab.ambulanceService && <span className="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">Ambulance</span>}
+                                            {!lab.homeCollection && !lab.is24x7 && !lab.emergency && !lab.ambulanceService && <span className="text-[9px] text-slate-300">—</span>}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                                            lab.status ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"
+                                          }`}>
+                                            {lab.status ? "Active" : "Inactive"}
+                                          </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                          <div className="flex justify-end gap-1">
+                                            <button onClick={(e) => { e.stopPropagation(); viewDetails(lab._id); }}
+                                              className="p-1.5 rounded hover:bg-black/5 opacity-60 hover:opacity-100 transition-all" title="View">
+                                              <MdVisibility size={16} />
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(lab._id); }}
+                                              className="p-1.5 rounded hover:bg-black/5 text-blue-600 opacity-60 hover:opacity-100 transition-all" title="Edit">
+                                              <MdEdit size={16} />
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(lab._id); }}
+                                              className="p-1.5 rounded hover:bg-red-50 text-red-600 opacity-60 hover:opacity-100 transition-all" title="Delete">
+                                              <MdDelete size={16} />
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          ) : (
+            /* ── INDIVIDUAL FLAT VIEW ── */
+            <table className="w-full text-left border-collapse">
             <thead>
               <tr style={{ backgroundColor: colors.accent + "05" }}>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
@@ -739,38 +925,57 @@ const Registrations = () => {
               )}
             </tbody>
           </table>
+          )}
         </div>
 
         {/* Pagination */}
-        {!loading && data.length > 0 && (
-          <div
-            className="px-6 py-4 border-t flex items-center justify-between"
-            style={{ borderColor: colors.accent + "10" }}
-          >
-            <p className="text-sm opacity-60" style={{ color: colors.text }}>
-              Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-              of {pagination.total}
-            </p>
-            <div className="flex gap-2">
-              <button
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ borderColor: colors.accent + "20" }}
-              >
-                <MdChevronLeft size={20} />
-              </button>
-              <button
-                disabled={page === pagination.totalPages}
-                onClick={() => setPage(page + 1)}
-                className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ borderColor: colors.accent + "20" }}
-              >
-                <MdChevronRight size={20} />
-              </button>
+        {regType === "parent" ? (
+          !parentLoading && parentData.length > 0 && parentPagination.totalPages > 1 && (
+            <div className="px-6 py-4 border-t flex items-center justify-between" style={{ borderColor: colors.accent + "10" }}>
+              <p className="text-sm opacity-60" style={{ color: colors.text }}>Page {parentPagination.page} of {parentPagination.totalPages}</p>
+              <div className="flex gap-2">
+                <button disabled={parentPage === 1} onClick={() => setParentPage(parentPage - 1)}
+                  className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30" style={{ borderColor: colors.accent + "20" }}>
+                  <MdChevronLeft size={20} />
+                </button>
+                <button disabled={parentPage >= parentPagination.totalPages} onClick={() => setParentPage(parentPage + 1)}
+                  className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30" style={{ borderColor: colors.accent + "20" }}>
+                  <MdChevronRight size={20} />
+                </button>
+              </div>
             </div>
-          </div>
+          )
+        ) : (
+          !loading && data.length > 0 && (
+            <div
+              className="px-6 py-4 border-t flex items-center justify-between"
+              style={{ borderColor: colors.accent + "10" }}
+            >
+              <p className="text-sm opacity-60" style={{ color: colors.text }}>
+                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+                of {pagination.total}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ borderColor: colors.accent + "20" }}
+                >
+                  <MdChevronLeft size={20} />
+                </button>
+                <button
+                  disabled={page === pagination.totalPages}
+                  onClick={() => setPage(page + 1)}
+                  className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ borderColor: colors.accent + "20" }}
+                >
+                  <MdChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+          )
         )}
       </div>
 

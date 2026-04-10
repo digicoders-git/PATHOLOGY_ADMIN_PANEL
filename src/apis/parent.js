@@ -6,6 +6,11 @@ export const getAllParents = async (params) => {
   return response.data;
 };
 
+export const getAllParentsWithLabs = async (params) => {
+  const response = await api.get("/parent/with-labs", { params });
+  return response.data;
+};
+
 export const createParent = async (data) => {
   const response = await api.post("/parent/create", data);
   return response.data;
@@ -23,5 +28,10 @@ export const deleteParent = async (id) => {
 
 export const updateParentStatus = async (id, status) => {
   const response = await api.patch(`/parent/status/${id}`, { status });
+  return response.data;
+};
+
+export const getParentWithLabs = async (id) => {
+  const response = await api.get(`/parent/with-labs/${id}`);
   return response.data;
 };
