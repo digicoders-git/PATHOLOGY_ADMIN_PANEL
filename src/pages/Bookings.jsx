@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { getAllBookings, deleteBooking, uploadTestReport } from "../apis/booking";
+import { getAllBookings, deleteBooking, uploadTestReport, updateBookingStatus } from "../apis/booking";
 import { toast } from "react-toastify";
 import {
   MdDelete,
@@ -44,11 +44,22 @@ const Bookings = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [isToday, setIsToday] = useState(false);
+  const [isCreatedToday, setIsCreatedToday] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getAllBookings({ page, limit: LIMIT, status: statusFilter, search });
+      const res = await getAllBookings({ 
+        page, 
+        limit: LIMIT, 
+        status: statusFilter, 
+        search,
+        date: dateFilter,
+        today: isToday ? "true" : "false",
+        created_today: isCreatedToday ? "true" : "false"
+      });
       if (res.success) {
         let rows = res.data || [];
         if (sourceFilter) rows = rows.filter((b) => b.source === sourceFilter);
@@ -65,13 +76,23 @@ const Bookings = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Handle Today toggle conflict with Date filter
+  const toggleToday = () => {
+    setIsToday(!isToday);
+    if (!isToday) setDateFilter(""); // Clear specific date if switching to "Today"
+  };
+
+  const toggleCreatedToday = () => {
+    setIsCreatedToday(!isCreatedToday);
+  };
+
   // Debounce search
   useEffect(() => {
     const t = setTimeout(() => { setSearch(searchTerm); setPage(1); }, 500);
     return () => clearTimeout(t);
   }, [searchTerm]);
 
-  useEffect(() => { setPage(1); }, [statusFilter, sourceFilter]);
+  useEffect(() => { setPage(1); }, [statusFilter, sourceFilter, dateFilter, isToday, isCreatedToday]);
 
 const handleDelete = (id) => {
     Swal.fire({
@@ -103,11 +124,30 @@ const handleDelete = (id) => {
     }
   };
 
-  const clearFilters = () => {
-    setSearchTerm(""); setSearch(""); setStatusFilter(""); setSourceFilter(""); setPage(1);
+  const handleStatusUpdate = async (id, newStatus) => {
+    try {
+      const res = await updateBookingStatus(id, { status: newStatus });
+      if (res.success) {
+        toast.success(`Status updated to ${newStatus}`);
+        fetchData();
+      }
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
   };
 
-  const hasFilters = searchTerm || statusFilter || sourceFilter;
+  const clearFilters = () => {
+    setSearchTerm(""); 
+    setSearch(""); 
+    setStatusFilter(""); 
+    setSourceFilter(""); 
+    setDateFilter("");
+    setIsToday(false);
+    setIsCreatedToday(false);
+    setPage(1);
+  };
+
+  const hasFilters = searchTerm || statusFilter || sourceFilter || dateFilter || isToday || isCreatedToday;
 
   const formatDate = (val) => {
     if (!val) return "—";
@@ -177,6 +217,46 @@ const handleDelete = (id) => {
               <option value="Cancelled">Cancelled</option>
             </select>
           </div>
+
+          {/* Date Filter */}
+          <div className="w-full lg:w-44">
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                if (e.target.value) setIsToday(false);
+              }}
+              className="w-full border rounded-sm px-3 py-2 text-sm outline-none focus:ring-1 transition-all"
+              style={{ backgroundColor: colors.background, borderColor: colors.accent + "30", color: colors.text }}
+            />
+          </div>
+
+          {/* Today Button */}
+          <button
+            onClick={toggleToday}
+            className={`px-4 py-2.5 rounded-sm text-xs font-bold transition-all border ${
+              isToday 
+                ? "bg-black text-white border-black" 
+                : "bg-transparent border-black/10 hover:border-black/30"
+            }`}
+            style={!isToday ? { color: colors.text, borderColor: colors.accent + "30" } : {}}
+          >
+            Today's Appt.
+          </button>
+
+          {/* Created Today Button */}
+          <button
+            onClick={toggleCreatedToday}
+            className={`px-4 py-2.5 rounded-sm text-xs font-bold transition-all border ${
+              isCreatedToday 
+                ? "bg-emerald-600 text-white border-emerald-600" 
+                : "bg-transparent border-black/10 hover:border-black/30"
+            }`}
+            style={!isCreatedToday ? { color: colors.text, borderColor: colors.accent + "30" } : {}}
+          >
+            New Today
+          </button>
 
           {hasFilters && (
             <button
@@ -318,13 +398,21 @@ const handleDelete = (id) => {
                       </div>
                     </td>
 
-                    {/* Status Badge (read-only) */}
+                    {/* Status Badge with Update dropdown */}
                     <td className="px-5 py-3.5">
-                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-sm border ${
-                        STATUS_COLORS[item.status] || "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}>
-                        {item.status}
-                      </span>
+                      <select
+                        value={item.status}
+                        onChange={(e) => handleStatusUpdate(item._id, e.target.value)}
+                        className={`text-[10px] font-black uppercase px-2 py-1 rounded-sm border outline-none cursor-pointer ${
+                          STATUS_COLORS[item.status] || "bg-slate-100 text-slate-600 border-slate-200"
+                        }`}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
                     </td>
 
                     {/* Actions */}
@@ -340,11 +428,15 @@ const handleDelete = (id) => {
                           >
                             <MdFilePresent size={17} />
                           </a>
-                        ) : (
-                          <label className="p-2 rounded-sm hover:bg-black/5 text-emerald-600 cursor-pointer" title="Upload Report">
+                        ) : item.status === "Completed" ? (
+                          <label className="p-2 rounded-sm hover:bg-black/5 text-emerald-600 cursor-pointer animate-pulse" title="Upload Report">
                             <MdCloudUpload size={17} />
                             <input type="file" className="hidden" onChange={(e) => handleFileUpload(item._id, e)} />
                           </label>
+                        ) : (
+                          <button disabled className="p-2 rounded-sm opacity-20 cursor-not-allowed" title="Mark as Completed to upload report">
+                            <MdCloudUpload size={17} />
+                          </button>
                         )}
                         <button
                           onClick={() => handleDelete(item._id)}
