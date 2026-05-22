@@ -67,6 +67,14 @@ const Notifications = () => {
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { setPage(1); }, [filter]);
 
+  // Auto-refresh every 15 seconds for live notifications
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
   const handleMarkRead = async (id) => {
     try {
       await markAsRead(id);

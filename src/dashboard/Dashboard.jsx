@@ -68,7 +68,7 @@ const Dashboard = () => {
       } catch {}
     };
     fetchCount();
-    const interval = setInterval(fetchCount, 30000);
+    const interval = setInterval(fetchCount, 10000);
     return () => clearInterval(interval);
   }, []);
 
