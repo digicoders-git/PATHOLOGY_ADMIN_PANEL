@@ -193,6 +193,7 @@ const Dashboard = () => {
       icon: MdPayments,
       path: "/dashboard/lab-test-pricing",
     },
+    { name: "Support Queries", icon: MdQuestionAnswer, path: "/dashboard/support-queries" },
     { name: "Profile", icon: MdPerson, path: "/dashboard/profile" },
     { name: "Notifications", icon: MdNotifications, path: "/dashboard/notifications" },
   ];

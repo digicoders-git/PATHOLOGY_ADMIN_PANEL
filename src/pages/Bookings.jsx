@@ -377,7 +377,23 @@ const handleDelete = (id) => {
 
                     {/* Amount */}
                     <td className="px-5 py-3.5 text-center">
-                      <span className="text-sm font-black">₹{item.amount}</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="text-sm font-black">₹{item.amount}</span>
+                        {item.totalMrp && item.totalMrp !== item.amount && (
+                          <span className="text-[10px] opacity-50 line-through">₹{item.totalMrp}</span>
+                        )}
+                        {item.totalDiscount > 0 && (
+                          <span className="text-[9px] text-green-600 font-bold">-{item.totalDiscount} OFF</span>
+                        )}
+                        {item.couponCode && (
+                          <span className="text-[9px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-sm mt-0.5 font-bold uppercase">
+                            {item.couponCode}
+                          </span>
+                        )}
+                        {item.adminDiscountAmount > 0 && (
+                          <span className="text-[9px] text-purple-600 font-bold mt-0.5">Admin: -₹{item.adminDiscountAmount}</span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Payment */}
