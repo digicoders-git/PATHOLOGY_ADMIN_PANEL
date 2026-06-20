@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { getAllSupportQueries, updateSupportQuery, deleteSupportQuery } from "../apis/support";
+import { getAllSupportQueries, updateSupportQuery, deleteSupportQuery, replyToSupportQuery } from "../apis/support";
 import { toast } from "react-toastify";
 import {
   MdDelete,
@@ -128,7 +128,7 @@ const SupportQueries = () => {
     if (!selectedQuery) return;
     try {
       setReplying(true);
-      const res = await updateSupportQuery(selectedQuery._id, { adminReply: replyText, status: "Resolved" });
+      const res = await replyToSupportQuery(selectedQuery._id, { adminReply: replyText });
       if (res.success) {
         toast.success("Reply sent and marked as resolved.");
         setViewModalOpen(false);

@@ -39,3 +39,13 @@ export const deleteSupportQuery = async (id) => {
     throw error;
   }
 };
+
+// Explicit Reply API
+export const replyToSupportQuery = async (id, data) => {
+  try {
+    const response = await API.post(`/admin/support/${id}/reply`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
