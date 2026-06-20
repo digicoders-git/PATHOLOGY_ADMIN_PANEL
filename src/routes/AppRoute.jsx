@@ -16,6 +16,7 @@ const LabTestPricing = React.lazy(() => import("../pages/LabTestPricing"));
 const Notifications = React.lazy(() => import("../pages/Notifications"));
 const Offers = React.lazy(() => import("../pages/Offers"));
 const SupportQueries = React.lazy(() => import("../pages/SupportQueries"));
+const WalletWithdrawals = React.lazy(() => import("../pages/WalletWithdrawals"));
 
 export const AppRoute = [
   { path: "profile", component: Profile },
@@ -34,4 +35,5 @@ export const AppRoute = [
   { path: "notifications", component: Notifications },
   { path: "offers", component: Offers },
   { path: "support-queries", component: SupportQueries },
+  { path: "wallet-withdrawals", component: WalletWithdrawals },
 ];
