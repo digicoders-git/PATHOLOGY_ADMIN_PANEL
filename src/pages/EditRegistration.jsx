@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAllParents } from "../apis/parent";
@@ -24,6 +24,50 @@ const EditRegistration = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [parents, setParents] = useState([]);
   const [availableTests, setAvailableTests] = useState([]);
+
+  const autocompleteInputRef = useRef(null);
+  const autocompleteInstance = useRef(null);
+
+  useEffect(() => {
+    if (!initialLoading && autocompleteInputRef.current && window.google) {
+      // Prevent multiple initializations
+      if (!autocompleteInstance.current) {
+        autocompleteInstance.current = new window.google.maps.places.Autocomplete(autocompleteInputRef.current, {
+          fields: ["geometry", "name", "formatted_address", "address_components"],
+        });
+
+        autocompleteInstance.current.addListener("place_changed", () => {
+          const place = autocompleteInstance.current.getPlace();
+          if (place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            
+            let city = "";
+            let state = "";
+            let pincode = "";
+
+            if (place.address_components) {
+              place.address_components.forEach((component) => {
+                if (component.types.includes("locality")) city = component.long_name;
+                if (component.types.includes("administrative_area_level_1")) state = component.long_name;
+                if (component.types.includes("postal_code")) pincode = component.long_name;
+              });
+            }
+
+            setFormData((prev) => ({
+              ...prev,
+              latitude: lat.toString(),
+              longitude: lng.toString(),
+              fullAddress: place.formatted_address || place.name || prev.fullAddress,
+              city: city || prev.city,
+              state: state || prev.state,
+              pincode: pincode || prev.pincode,
+            }));
+          }
+        });
+      }
+    }
+  }, [initialLoading]);
 
   const [formData, setFormData] = useState({
     parent: "",
@@ -63,6 +107,8 @@ const EditRegistration = () => {
     pricingItems: [{ test: "", price: "", discountPercent: "", discountPrice: "" }],
     status: true,
     password: "",
+    latitude: "",
+    longitude: "",
   });
 
   const [existingFiles, setExistingFiles] = useState({
@@ -146,6 +192,8 @@ const EditRegistration = () => {
                 : [{ test: "", price: "", discountPercent: "", discountPrice: "" }],
             status: reg.status !== undefined ? reg.status : true,
             password: reg.password || "",
+            latitude: reg.latitude || "",
+            longitude: reg.longitude || "",
           });
 
           setExistingFiles({
@@ -290,6 +338,8 @@ const EditRegistration = () => {
         staffCount: formData.staffCount,
         status: formData.status,
         password: formData.password,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
       };
 
       Object.keys(mapping).forEach((key) => {
@@ -655,6 +705,18 @@ const EditRegistration = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="md:col-span-3">
+              <label className={labelStyle}>Search Location (Google Maps Autocomplete)</label>
+              <input
+                type="text"
+                ref={autocompleteInputRef}
+                style={inputStyle}
+                placeholder="Search for an address to auto-fill details..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.preventDefault();
+                }}
+              />
+            </div>
+            <div className="md:col-span-3">
               <label className={labelStyle}>Full Address</label>
               <input
                 type="text"
@@ -703,6 +765,31 @@ const EditRegistration = () => {
                 onChange={handleChange}
                 style={inputStyle}
               />
+            </div>
+            <div>
+              <label className={labelStyle}>Latitude (Google Map)</label>
+              <input
+                type="text"
+                name="latitude"
+                value={formData.latitude}
+                onChange={handleChange}
+                style={inputStyle}
+                placeholder="e.g. 28.7041"
+              />
+            </div>
+            <div>
+              <label className={labelStyle}>Longitude (Google Map)</label>
+              <input
+                type="text"
+                name="longitude"
+                value={formData.longitude}
+                onChange={handleChange}
+                style={inputStyle}
+                placeholder="e.g. 77.1025"
+              />
+              <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 mt-1 block">
+                Open Google Maps to find coordinates
+              </a>
             </div>
           </div>
         </div>
