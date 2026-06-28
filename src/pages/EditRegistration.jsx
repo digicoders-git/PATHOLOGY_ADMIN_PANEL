@@ -27,11 +27,34 @@ const EditRegistration = () => {
 
   const autocompleteInputRef = useRef(null);
   const autocompleteInstance = useRef(null);
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const markerInstance = useRef(null);
 
   useEffect(() => {
-    if (!initialLoading && autocompleteInputRef.current && window.google) {
+    if (!initialLoading && autocompleteInputRef.current && mapRef.current && window.google) {
       // Prevent multiple initializations
       if (!autocompleteInstance.current) {
+        const initialPos = {
+            lat: parseFloat(formData.latitude) || 20.5937,
+            lng: parseFloat(formData.longitude) || 78.9629
+        };
+
+        mapInstance.current = new window.google.maps.Map(mapRef.current, {
+            center: initialPos,
+            zoom: formData.latitude ? 15 : 5,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+        });
+
+        markerInstance.current = new window.google.maps.Marker({
+            position: initialPos,
+            map: mapInstance.current,
+            draggable: true,
+            animation: window.google.maps.Animation.DROP,
+        });
+
         autocompleteInstance.current = new window.google.maps.places.Autocomplete(autocompleteInputRef.current, {
           fields: ["geometry", "name", "formatted_address", "address_components"],
         });
@@ -42,6 +65,12 @@ const EditRegistration = () => {
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
             
+            // Move map
+            const newPos = { lat, lng };
+            mapInstance.current.setCenter(newPos);
+            mapInstance.current.setZoom(17);
+            markerInstance.current.setPosition(newPos);
+
             let city = "";
             let state = "";
             let pincode = "";
@@ -64,6 +93,36 @@ const EditRegistration = () => {
               pincode: pincode || prev.pincode,
             }));
           }
+        });
+
+        // Add map click listener
+        mapInstance.current.addListener("click", (e) => {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            markerInstance.current.setPosition({ lat, lng });
+            setFormData(prev => ({ ...prev, latitude: lat.toString(), longitude: lng.toString() }));
+            
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    setFormData(prev => ({ ...prev, fullAddress: results[0].formatted_address }));
+                }
+            });
+        });
+
+        // Add marker drag listener
+        markerInstance.current.addListener("dragend", () => {
+            const pos = markerInstance.current.getPosition();
+            const lat = pos.lat();
+            const lng = pos.lng();
+            setFormData(prev => ({ ...prev, latitude: lat.toString(), longitude: lng.toString() }));
+
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    setFormData(prev => ({ ...prev, fullAddress: results[0].formatted_address }));
+                }
+            });
         });
       }
     }
@@ -787,10 +846,20 @@ const EditRegistration = () => {
                 style={inputStyle}
                 placeholder="e.g. 77.1025"
               />
-              <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 mt-1 block">
-                Open Google Maps to find coordinates
-              </a>
             </div>
+          </div>
+
+          <div className="mt-8 border-t pt-8">
+             <h2 className="text-xs font-black uppercase mb-4 opacity-80">
+                Fix Exact Laboratory Location (Google Map)
+             </h2>
+             <div 
+               ref={mapRef} 
+               className="w-full h-80 rounded-2xl border-2 border-slate-100 shadow-inner bg-slate-50 overflow-hidden"
+             ></div>
+             <p className="text-[10px] mt-2 opacity-40 font-bold uppercase italic">
+                * Coordinates are automatically captured from the map selection
+             </p>
           </div>
         </div>
 
