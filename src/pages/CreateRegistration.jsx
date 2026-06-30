@@ -70,7 +70,7 @@ const CreateRegistration = () => {
     staffCount: "",
     pathologyDocs: null,
     certifications: [],
-    pricingItems: [{ test: "", price: "", discountPercent: "", discountPrice: "" }],
+    pricingItems: [],
     status: true,
     password: "",
     latitude: "",
@@ -151,12 +151,29 @@ const CreateRegistration = () => {
   };
 
   const handleTestToggle = (id) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedTests: prev.selectedTests.includes(id)
-        ? prev.selectedTests.filter((t) => t !== id)
-        : [...prev.selectedTests, id],
-    }));
+    setFormData((prev) => {
+      const isSelected = prev.selectedTests.includes(id);
+      
+      let newSelectedTests;
+      let newPricingItems;
+
+      if (isSelected) {
+        newSelectedTests = prev.selectedTests.filter((t) => t !== id);
+        newPricingItems = prev.pricingItems.filter((item) => item.test !== id);
+      } else {
+        newSelectedTests = [...prev.selectedTests, id];
+        newPricingItems = [
+          ...prev.pricingItems,
+          { test: id, price: "", discountPercent: "", discountPrice: "" }
+        ];
+      }
+
+      return {
+        ...prev,
+        selectedTests: newSelectedTests,
+        pricingItems: newPricingItems,
+      };
+    });
   };
 
   const handleCertToggle = (name) => {
@@ -185,45 +202,37 @@ const CreateRegistration = () => {
      }));
   };
 
-  const handleAddPricing = () => {
-    setFormData((prev) => ({
-      ...prev,
-      pricingItems: [
-        ...prev.pricingItems,
-        { test: "", price: "", discountPercent: "", discountPrice: "" },
-      ],
-    }));
-  };
-
-  const handlePricingChange = (index, field, value) => {
+  const handlePricingChange = (testId, field, value) => {
     if (field === "price" || field === "discountPercent") {
       if (value.startsWith("-")) return;
     }
-    const newPricing = [...formData.pricingItems];
-    newPricing[index][field] = value;
+    
+    setFormData((prev) => {
+      const newPricing = [...prev.pricingItems];
+      const index = newPricing.findIndex(item => item.test === testId);
+      if (index === -1) return prev;
 
-    // Automatic Calculation
-    const price = parseFloat(newPricing[index].price || 0);
-    const percent = parseFloat(newPricing[index].discountPercent || 0);
+      newPricing[index] = { ...newPricing[index], [field]: value };
 
-    if (field === "price" || field === "discountPercent") {
-        if (price > 0 && percent >= 0) {
-            const calculatedFinal = price - (price * percent / 100);
-            newPricing[index].discountPrice = calculatedFinal > 0 ? calculatedFinal.toFixed(2) : "0";
-        }
-    } else if (field === "discountPrice") {
-        // Allow manual overwrite if needed, but usually percent will drive it
-        newPricing[index].discountPrice = value;
-    }
+      // Automatic Calculation
+      const price = parseFloat(newPricing[index].price || 0);
+      const percent = parseFloat(newPricing[index].discountPercent || 0);
 
-    setFormData((prev) => ({ ...prev, pricingItems: newPricing }));
-  };
+      if (field === "price" || field === "discountPercent") {
+          if (price > 0 && percent >= 0) {
+              const calculatedFinal = price - (price * percent / 100);
+              newPricing[index].discountPrice = calculatedFinal > 0 ? calculatedFinal.toFixed(2) : "0";
+          } else if (price > 0 && !percent) {
+              newPricing[index].discountPrice = price.toString();
+          } else if (!price) {
+              newPricing[index].discountPrice = "";
+          }
+      } else if (field === "discountPrice") {
+          newPricing[index].discountPrice = value;
+      }
 
-  const handleRemovePricing = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      pricingItems: prev.pricingItems.filter((_, i) => i !== index),
-    }));
+      return { ...prev, pricingItems: newPricing };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -828,104 +837,74 @@ const CreateRegistration = () => {
           </div>
 
           <label className={labelStyle}>Choose Available Tests</label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {availableTests.map((test) => (
-              <div
-                key={test._id}
-                onClick={() => handleTestToggle(test._id)}
-                className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-all ${formData.selectedTests.includes(test._id) ? "bg-black/5 border-black/40" : "bg-transparent border-black/10 hover:border-black/20"}`}
-              >
-                <div className="text-xl">
-                  {formData.selectedTests.includes(test._id) ? (
-                    <MdCheckBox />
-                  ) : (
-                    <MdCheckBoxOutlineBlank />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {availableTests.map((test) => {
+              const isSelected = formData.selectedTests.includes(test._id);
+              const pricingInfo = formData.pricingItems.find(p => p.test === test._id) || {};
+
+              return (
+                <div
+                  key={test._id}
+                  className={`flex flex-col p-4 border rounded transition-all ${isSelected ? "bg-black/5 border-black/40" : "bg-transparent border-black/10 hover:border-black/20"}`}
+                >
+                  <div 
+                     onClick={() => handleTestToggle(test._id)} 
+                     className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="text-xl">
+                      {isSelected ? (
+                        <MdCheckBox />
+                      ) : (
+                        <MdCheckBoxOutlineBlank />
+                      )}
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-tight opacity-80">
+                      {test.title}
+                    </span>
+                  </div>
+                  
+                  {isSelected && (
+                    <div className="mt-4 pt-4 border-t border-black/10 grid grid-cols-3 gap-2" onClick={e => e.stopPropagation()}>
+                       <div>
+                         <label className="block text-[9px] font-bold uppercase mb-1 opacity-60">Price (₹)</label>
+                         <input
+                            type="number"
+                            value={pricingInfo.price || ""}
+                            onChange={(e) => handlePricingChange(test._id, "price", e.target.value)}
+                            className="w-full p-2 border rounded text-xs outline-none bg-white"
+                            placeholder="MRP"
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-[9px] font-bold uppercase mb-1 opacity-60">Discount (%)</label>
+                         <input
+                            type="number"
+                            value={pricingInfo.discountPercent || ""}
+                            onChange={(e) => handlePricingChange(test._id, "discountPercent", e.target.value)}
+                            className="w-full p-2 border rounded text-xs outline-none bg-white"
+                            placeholder="%"
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-[9px] font-bold uppercase mb-1 opacity-60">Final (₹)</label>
+                         <input
+                            type="number"
+                            readOnly
+                            value={pricingInfo.discountPrice || ""}
+                            onChange={(e) => handlePricingChange(test._id, "discountPrice", e.target.value)}
+                            className="w-full p-2 border rounded text-xs outline-none bg-black/5"
+                            placeholder="Final"
+                         />
+                       </div>
+                    </div>
                   )}
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-tight opacity-80">
-                  {test.title}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Custom Pricing */}
-        <div
-          className={groupStyle}
-          style={{
-            backgroundColor: colors.background,
-            borderColor: colors.accent + "20",
-          }}
-        >
-          <div className="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 className="text-xs font-black uppercase opacity-80">
-              Custom Test Pricing
-            </h2>
-            <button
-              type="button"
-              onClick={handleAddPricing}
-              className="text-[10px] font-bold uppercase flex items-center gap-1 opacity-60 hover:opacity-100"
-            >
-              <MdAdd size={16} /> Add Test
-            </button>
-          </div>
-          {formData.pricingItems.map((item, idx) => (
-            <div key={idx} className="flex gap-4 mb-3 items-end">
-              <div className="flex-1">
-                <label className={labelStyle}>Test Name</label>
-                <ModernSelect
-                  fullWidth
-                  value={item.test}
-                  onChange={(val) => handlePricingChange(idx, "test", val)}
-                  options={availableTests.map((t) => ({
-                    label: t.title,
-                    value: t._id,
-                  }))}
-                />
-              </div>
-              <div className="w-32">
-                  <label className={labelStyle}>Price (MRP ₹)</label>
-                <input
-                  type="number"
-                  value={item.price}
-                  onChange={(e) =>
-                    handlePricingChange(idx, "price", e.target.value)
-                  }
-                  style={inputStyle}
-                />
-              </div>
-              <div className="w-24">
-                <label className={labelStyle}>Discount (%)</label>
-                <input
-                  type="number"
-                  placeholder="%"
-                  value={item.discountPercent}
-                  onChange={(e) =>
-                    handlePricingChange(idx, "discountPercent", e.target.value)
-                  }
-                  style={inputStyle}
-                />
-              </div>
-              <div className="w-32">
-                <label className={labelStyle}>Final (₹)</label>
-                <input
-                  type="number"
-                  readOnly
-                  value={item.discountPrice}
-                  style={{...inputStyle, background: colors.accent+'05', opacity: 0.7}}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => handleRemovePricing(idx)}
-                className="p-2 mb-1 text-red-500 rounded hover:bg-black/5"
-              >
-                <MdDelete size={20} />
-              </button>
-            </div>
-          ))}
-        </div>
+
 
         {/* Certifications (Checkbox based) */}
         <div
