@@ -958,6 +958,37 @@ const Registrations = () => {
                   className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30" style={{ borderColor: colors.accent + "20" }}>
                   <MdChevronLeft size={20} />
                 </button>
+
+                {/* Parent Page Numbers */}
+                {(() => {
+                  const maxPages = 5;
+                  let start = Math.max(1, parentPage - 2);
+                  let end = Math.min(parentPagination.totalPages, start + maxPages - 1);
+                  if (end - start + 1 < maxPages) start = Math.max(1, end - maxPages + 1);
+                  const pgs = [];
+                  for (let i = start; i <= end; i++) pgs.push(i);
+                  
+                  return (
+                    <div className="flex items-center gap-1 hidden md:flex">
+                      {start > 1 && (
+                        <>
+                          <button onClick={() => setParentPage(1)} className="px-3 py-1 border rounded-sm hover:bg-black/5" style={{ borderColor: colors.accent + "20", color: colors.text }}>1</button>
+                          {start > 2 && <span className="px-1 opacity-50" style={{ color: colors.text }}>...</span>}
+                        </>
+                      )}
+                      {pgs.map(p => (
+                        <button key={p} onClick={() => setParentPage(p)} className="px-3 py-1 border rounded-sm transition-all" style={{ borderColor: colors.accent + "20", backgroundColor: parentPage === p ? colors.primary : "transparent", color: parentPage === p ? "white" : colors.text }}>{p}</button>
+                      ))}
+                      {end < parentPagination.totalPages && (
+                        <>
+                          {end < parentPagination.totalPages - 1 && <span className="px-1 opacity-50" style={{ color: colors.text }}>...</span>}
+                          <button onClick={() => setParentPage(parentPagination.totalPages)} className="px-3 py-1 border rounded-sm hover:bg-black/5" style={{ borderColor: colors.accent + "20", color: colors.text }}>{parentPagination.totalPages}</button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <button disabled={parentPage >= parentPagination.totalPages} onClick={() => setParentPage(parentPage + 1)}
                   className="p-2 border rounded-sm hover:bg-black/5 transition-all disabled:opacity-30" style={{ borderColor: colors.accent + "20" }}>
                   <MdChevronRight size={20} />
@@ -985,6 +1016,37 @@ const Registrations = () => {
                 >
                   <MdChevronLeft size={20} />
                 </button>
+
+                {/* Individual Page Numbers */}
+                {(() => {
+                  const maxPages = 5;
+                  let start = Math.max(1, page - 2);
+                  let end = Math.min(pagination.totalPages, start + maxPages - 1);
+                  if (end - start + 1 < maxPages) start = Math.max(1, end - maxPages + 1);
+                  const pgs = [];
+                  for (let i = start; i <= end; i++) pgs.push(i);
+                  
+                  return (
+                    <div className="flex items-center gap-1 hidden md:flex">
+                      {start > 1 && (
+                        <>
+                          <button onClick={() => setPage(1)} className="px-3 py-1 border rounded-sm hover:bg-black/5" style={{ borderColor: colors.accent + "20", color: colors.text }}>1</button>
+                          {start > 2 && <span className="px-1 opacity-50" style={{ color: colors.text }}>...</span>}
+                        </>
+                      )}
+                      {pgs.map(p => (
+                        <button key={p} onClick={() => setPage(p)} className="px-3 py-1 border rounded-sm transition-all" style={{ borderColor: colors.accent + "20", backgroundColor: page === p ? colors.primary : "transparent", color: page === p ? "white" : colors.text }}>{p}</button>
+                      ))}
+                      {end < pagination.totalPages && (
+                        <>
+                          {end < pagination.totalPages - 1 && <span className="px-1 opacity-50" style={{ color: colors.text }}>...</span>}
+                          <button onClick={() => setPage(pagination.totalPages)} className="px-3 py-1 border rounded-sm hover:bg-black/5" style={{ borderColor: colors.accent + "20", color: colors.text }}>{pagination.totalPages}</button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <button
                   disabled={page === pagination.totalPages}
                   onClick={() => setPage(page + 1)}
