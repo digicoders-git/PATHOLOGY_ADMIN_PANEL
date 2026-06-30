@@ -447,7 +447,7 @@ const handleDelete = (id) => {
                         ) : item.status === "Completed" ? (
                           <label className="p-2 rounded-sm hover:bg-black/5 text-emerald-600 cursor-pointer animate-pulse" title="Upload Report">
                             <MdCloudUpload size={17} />
-                            <input type="file" className="hidden" onChange={(e) => handleFileUpload(item._id, e)} />
+                            <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileUpload(item._id, e)} />
                           </label>
                         ) : (
                           <button disabled className="p-2 rounded-sm opacity-20 cursor-not-allowed" title="Mark as Completed to upload report">
