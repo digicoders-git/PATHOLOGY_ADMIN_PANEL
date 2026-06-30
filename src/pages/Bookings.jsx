@@ -436,7 +436,7 @@ const handleDelete = (id) => {
                       <div className="flex justify-end gap-2">
                         {item.reportFile ? (
                           <a
-                            href={`${import.meta.env.VITE_API_BASE_URL}/${item.reportFile}`}
+                            href={item.reportFile.startsWith('http') ? item.reportFile : `${import.meta.env.VITE_API_BASE_URL}/${item.reportFile}`}
                             target="_blank"
                             rel="noreferrer"
                             className="p-2 rounded-sm hover:bg-black/5 text-blue-600"
