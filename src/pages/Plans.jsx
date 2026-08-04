@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { getPlans, createPlan, updatePlan, deletePlan } from "../apis/plan";
+import { getPlans, createPlan, updatePlan, deletePlan, togglePlanStatus } from "../apis/plan";
 import { toast } from "react-toastify";
 import { 
     MdAdd, MdEdit, MdDelete, MdCheck, MdDragIndicator, 
@@ -91,6 +91,20 @@ const Plans = () => {
     }
   };
 
+  const handleToggleStatus = async (id) => {
+    try {
+      const res = await togglePlanStatus(id);
+      if (res.success) {
+        toast.success(res.message);
+        setPlans(prev => prev.map(p => p._id === id ? { ...p, status: res.data.status } : p));
+      } else {
+        toast.error(res.message || "Failed to update status");
+      }
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
+  };
+
   const handleAddFeature = () => {
     setFormData(prev => ({ ...prev, features: [...prev.features, ""] }));
   };
@@ -178,17 +192,32 @@ const Plans = () => {
                 </div>
               )}
 
-              <div className="mb-6">
-                 <h3 className="text-lg font-black uppercase tracking-tighter opacity-70">{plan.name}</h3>
-                 <div className="flex items-baseline gap-1 mt-4">
-                    <span className="text-3xl font-black">₹{plan.price}</span>
-                    <span className="text-xs font-bold opacity-40 uppercase">{plan.priceLabel}</span>
+              <div className="mb-6 flex justify-between items-start">
+                 <div>
+                    <h3 className="text-lg font-black uppercase tracking-tighter opacity-70">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 mt-4">
+                       <span className="text-3xl font-black">₹{plan.price}</span>
+                       <span className="text-xs font-bold opacity-40 uppercase">{plan.priceLabel}</span>
+                    </div>
+                    {plan.totalPrice > 0 && (
+                      <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-1">
+                         Total Price: <span className="text-black">₹{plan.totalPrice}</span>
+                      </div>
+                    )}
                  </div>
-                 {plan.totalPrice > 0 && (
-                   <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-1">
-                      Total Price: <span className="text-black">₹{plan.totalPrice}</span>
-                   </div>
-                 )}
+                 
+                 <button
+                   onClick={() => handleToggleStatus(plan._id)}
+                   className={`flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all duration-300 shadow-sm border ${
+                     plan.status 
+                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                       : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                   }`}
+                   title="Click to toggle active/inactive status"
+                 >
+                   <span className={`w-1.5 h-1.5 rounded-full ${plan.status ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                   {plan.status ? 'Active' : 'Inactive'}
+                 </button>
               </div>
 
               {/* Plan Info: Unlimited + Duration */}
