@@ -22,8 +22,6 @@ const Plans = () => {
     totalPrice: "",
     priceLabel: "per month",
     badgeText: "",
-    totalBookings: "",
-    freeBookings: "",
     duration: "30",
     features: [""],
     status: true,
@@ -54,8 +52,6 @@ const Plans = () => {
       totalPrice: "",
       priceLabel: "per month",
       badgeText: "",
-      totalBookings: "",
-      freeBookings: "",
       duration: "30",
       features: [""],
       status: true,
@@ -118,13 +114,14 @@ const Plans = () => {
       const payload = { 
         ...formData, 
         features: filteredFeatures,
-        totalBookings: parseInt(formData.totalBookings) || 0,
-        freeBookings: parseInt(formData.freeBookings) || 0,
         duration: parseInt(formData.duration) || 30,
         price: parseFloat(formData.price) || 0,
         totalPrice: parseFloat(formData.totalPrice) || 0,
         displayOrder: parseInt(formData.displayOrder) || 0
       };
+      // Remove deprecated booking limit fields
+      delete payload.totalBookings;
+      delete payload.freeBookings;
 
       const res = editId 
         ? await updatePlan(editId, payload)
@@ -194,22 +191,16 @@ const Plans = () => {
                  )}
               </div>
 
-              {/* Bookings Info */}
-              <div className="grid grid-cols-2 gap-3 mb-6 p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-                <div>
-                  <p className="text-[9px] font-black uppercase text-purple-700 mb-1">Total Bookings</p>
-                  <p className="text-2xl font-black text-purple-600">{plan.totalBookings || 0}</p>
+              {/* Plan Info: Unlimited + Duration */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 flex flex-col items-center justify-center text-center">
+                  <p className="text-[9px] font-black uppercase text-emerald-700 mb-1">Bookings</p>
+                  <p className="text-xl font-black text-emerald-600">Unlimited</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase text-green-700 mb-1">Free Bookings</p>
-                  <p className="text-2xl font-black text-green-600">{plan.freeBookings || 0}</p>
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 flex flex-col items-center justify-center text-center">
+                  <p className="text-[9px] font-black uppercase text-blue-700 mb-1">Validity</p>
+                  <p className="text-xl font-black text-blue-600">{plan.duration || 30} Days</p>
                 </div>
-              </div>
-
-              {/* Duration */}
-              <div className="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-[9px] font-black uppercase text-blue-700 mb-1">Plan Duration</p>
-                <p className="text-xl font-black text-blue-600">{plan.duration || 30} Days</p>
               </div>
 
               <div className="space-y-3 mb-10 pt-6 border-t border-slate-50">
@@ -251,7 +242,7 @@ const Plans = () => {
              <div className="p-6 border-b flex justify-between items-center bg-slate-50">
                <div>
                   <h2 className="text-lg font-black uppercase tracking-tight">{editId ? 'Update Subscription' : 'Create Subscription'}</h2>
-                  <p className="text-[10px] opacity-40 font-bold uppercase mt-1">Define pricing, total bookings, free bookings, duration and features</p>
+                  <p className="text-[10px] opacity-40 font-bold uppercase mt-1">All plans include unlimited bookings — just set price & duration</p>
                </div>
                <button onClick={() => setModalOpen(false)} className="opacity-40 hover:opacity-100 transition-opacity"><MdClose size={24} /></button>
              </div>
@@ -333,62 +324,43 @@ const Plans = () => {
                    </div>
                  </div>
 
-                 {/* Bookings & Duration - MAIN SECTION */}
-                 <div className="border-2 border-purple-300 rounded-lg p-6 bg-gradient-to-br from-purple-50 to-purple-100">
-                   <h3 className="text-sm font-black uppercase mb-6 flex items-center gap-2 text-purple-800">
-                     <MdInfo size={16} /> Bookings & Duration Configuration
+                                {/* Duration — MAIN SECTION */}
+                 <div className="border-2 border-blue-300 rounded-lg p-6 bg-gradient-to-br from-blue-50 to-blue-100">
+                   <h3 className="text-sm font-black uppercase mb-2 flex items-center gap-2 text-blue-800">
+                     <MdInfo size={16} /> Plan Duration & Bookings
                    </h3>
+                   <p className="text-[10px] text-blue-600 font-bold mb-6 uppercase tracking-wide">
+                     All plans include <span className="text-emerald-700 font-black underline">UNLIMITED BOOKINGS</span> — lab can accept unlimited bookings during plan validity
+                   </p>
                    
-                   <div className="grid grid-cols-3 gap-6">
-                      {/* Total Bookings */}
-                      <div>
-                         <label className="text-[10px] font-black uppercase text-purple-800 block mb-2">Total Bookings in Plan *</label>
-                         <input 
-                            required type="number" 
-                            value={formData.totalBookings} 
-                            onChange={(e) => setFormData(p => ({...p, totalBookings: e.target.value}))}
-                            placeholder="e.g. 100"
-                            className="w-full bg-white border-2 border-purple-400 p-3 rounded font-bold text-sm outline-none focus:border-purple-600 transition-all" 
-                         />
-                         <p className="text-[9px] text-purple-700 font-bold mt-2">Total bookings available in this plan</p>
-                      </div>
-
-                      {/* Free Bookings */}
-                      <div>
-                         <label className="text-[10px] font-black uppercase text-green-800 block mb-2">Free Bookings *</label>
-                         <input 
-                            required type="number" 
-                            value={formData.freeBookings} 
-                            onChange={(e) => setFormData(p => ({...p, freeBookings: e.target.value}))}
-                            placeholder="e.g. 5"
-                            className="w-full bg-white border-2 border-green-400 p-3 rounded font-bold text-sm outline-none focus:border-green-600 transition-all" 
-                         />
-                         <p className="text-[9px] text-green-700 font-bold mt-2">Free bookings included</p>
-                      </div>
-
-                      {/* Duration */}
+                   <div className="grid grid-cols-2 gap-6">
                       <div>
                          <label className="text-[10px] font-black uppercase text-blue-800 block mb-2">Duration (Days) *</label>
                          <input 
                             required type="number" 
                             value={formData.duration} 
                             onChange={(e) => setFormData(p => ({...p, duration: e.target.value}))}
-                            placeholder="e.g. 7"
+                            placeholder="e.g. 7, 30, 90, 365"
                             className="w-full bg-white border-2 border-blue-400 p-3 rounded font-bold text-sm outline-none focus:border-blue-600 transition-all" 
                          />
-                         <p className="text-[9px] text-blue-700 font-bold mt-2">Plan validity in days</p>
+                         <p className="text-[9px] text-blue-700 font-bold mt-2">7 = Weekly | 30 = Monthly | 90 = Quarterly | 365 = Yearly</p>
                       </div>
-                   </div>
 
-                   {/* Summary */}
-                   <div className="mt-6 p-4 bg-white rounded-lg border-2 border-purple-200">
-                      <p className="text-[11px] font-black text-slate-700">
-                        <span className="text-purple-700">Total: {formData.totalBookings || 0} bookings</span>
-                        <span className="mx-2">|</span>
-                        <span className="text-green-700">Free: {formData.freeBookings || 0} bookings</span>
-                        <span className="mx-2">|</span>
-                        <span className="text-blue-700">Valid: {formData.duration || 30} days</span>
-                      </p>
+                      <div className="bg-white rounded-lg border-2 border-emerald-200 p-4 flex flex-col justify-center">
+                        <p className="text-[9px] font-black uppercase text-slate-500 mb-2">Plan Summary Preview</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <MdCheck className="text-emerald-600" size={16} />
+                          <span className="text-sm font-black text-emerald-700">Unlimited Bookings</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <MdCheck className="text-blue-600" size={16} />
+                          <span className="text-sm font-black text-blue-700">Valid for {formData.duration || 30} days</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MdCheck className="text-slate-600" size={16} />
+                          <span className="text-sm font-black text-slate-700">Price: ₹{formData.price || 0}</span>
+                        </div>
+                      </div>
                    </div>
                  </div>
 
