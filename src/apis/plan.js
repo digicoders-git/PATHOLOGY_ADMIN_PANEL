@@ -36,4 +36,13 @@ export const deletePlan = async (id) => {
   }
 };
 
+export const togglePlanStatus = async (id) => {
+  try {
+    const res = await api.patch(`/plans/${id}/status`);
+    return res.data;
+  } catch (error) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+};
+
 
