@@ -19,7 +19,7 @@ const AppContent = () => {
   // Re-read token whenever route changes (e.g. after login redirect)
   useEffect(() => {
     const token = localStorage.getItem("admin-token");
-    setAuthToken(token);
+    setAuthToken((prev) => (prev !== token ? token : prev));
   }, [location.pathname]);
 
   useNotifications(authToken);

@@ -53,3 +53,13 @@ export const toggleFeatured = async (id) => {
   const response = await api.patch(`/registrations/featured/${id}`);
   return response.data;
 };
+
+export const creditLabWallet = async (data) => {
+  const response = await api.post("/registrations/wallet/credit", data);
+  return response.data;
+};
+
+export const getLabWalletTransactions = async (labId) => {
+  const response = await api.get(`/registrations/${labId}/wallet-transactions`);
+  return response.data;
+};

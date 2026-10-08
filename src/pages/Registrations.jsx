@@ -23,8 +23,9 @@ import {
   MdStarOutline,
   MdKeyboardArrowDown,
   MdOutlineScience,
+  MdAccountBalanceWallet,
 } from "react-icons/md";
-import * as XLSX from "xlsx";
+import CreditWalletModal from "../components/CreditWalletModal";
 import Loader from "./ui/Loader";
 import Swal from "sweetalert2";
 import Toggle from "../components/ui/Toggle";
@@ -71,6 +72,7 @@ const Registrations = () => {
   const [editingId, setEditingId] = useState(null);
   const [featuringId, setFeaturingId] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [walletModalLab, setWalletModalLab] = useState(null);
   const fileInputRef = useRef(null);
 
   // Parent grouped data
@@ -89,7 +91,8 @@ const Registrations = () => {
     finally { setParentLoading(false); }
   }, [parentPage, search]);
 
-  const handleDownloadSample = () => {
+  const handleDownloadSample = async () => {
+    const XLSX = await import("xlsx");
     const sampleData = [
       {
         // Basic Information
@@ -201,6 +204,7 @@ const Registrations = () => {
     // Reset file input for same file selection
     e.target.value = "";
 
+    const XLSX = await import("xlsx");
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -755,6 +759,13 @@ const Registrations = () => {
                                                   ? <MdStar size={16} className="text-amber-400" />
                                                   : <MdStarOutline size={16} className="opacity-30 hover:opacity-70 hover:text-amber-400" />}
                                             </button>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setWalletModalLab(lab); }}
+                                              className="p-1.5 rounded hover:bg-emerald-50 text-emerald-600 opacity-80 hover:opacity-100 transition-all"
+                                              title="Credit Wallet / Offer Points"
+                                            >
+                                              <MdAccountBalanceWallet size={16} />
+                                            </button>
                                             <button onClick={(e) => { e.stopPropagation(); viewDetails(lab._id); }}
                                               className="p-1.5 rounded hover:bg-black/5 opacity-60 hover:opacity-100 transition-all" title="View">
                                               <MdVisibility size={16} />
@@ -853,6 +864,10 @@ const Registrations = () => {
                             Affiliated: {item.parent.name}
                           </span>
                         )}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-sm w-fit mt-1">
+                          <MdAccountBalanceWallet size={12} />
+                          ₹{item.walletBalance || 0}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -907,6 +922,13 @@ const Registrations = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setWalletModalLab(item)}
+                          className="p-2 rounded-sm hover:bg-emerald-50 text-emerald-600 opacity-80 hover:opacity-100 transition-all"
+                          title="Credit Wallet / Offer Points"
+                        >
+                          <MdAccountBalanceWallet size={18} />
+                        </button>
                         <button
                           onClick={() => viewDetails(item._id)}
                           className="p-2 rounded-sm hover:bg-black/5 text-primary opacity-60 hover:opacity-100 transition-all"
@@ -1204,6 +1226,20 @@ const Registrations = () => {
           </div>
         </div>
       )}
+
+      {/* Credit Wallet Modal */}
+      <CreditWalletModal
+        isOpen={!!walletModalLab}
+        lab={walletModalLab}
+        onClose={() => setWalletModalLab(null)}
+        onSuccess={(labId, newBalance) => {
+          setData((prev) =>
+            prev.map((l) =>
+              l._id === labId ? { ...l, walletBalance: newBalance } : l
+            )
+          );
+        }}
+      />
     </div>
   );
 };

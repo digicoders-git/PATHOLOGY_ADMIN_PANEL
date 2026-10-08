@@ -1,13 +1,13 @@
 import React from "react";
+import Registrations from "../pages/Registrations";
+import RegistrationDetails from "../pages/RegistrationDetails";
+import CreateRegistration from "../pages/CreateRegistration";
+import EditRegistration from "../pages/EditRegistration";
 
 const Profile = React.lazy(() => import("../pages/Profile"));
 const TestsServices = React.lazy(() => import("../pages/TestsServices"));
-const Registrations = React.lazy(() => import("../pages/Registrations"));
-const RegistrationDetails = React.lazy(() => import("../pages/RegistrationDetails"));
 const Parents = React.lazy(() => import("../pages/Parents"));
-const CreateRegistration = React.lazy(() => import("../pages/CreateRegistration"));
 const Categories = React.lazy(() => import("../pages/Categories"));
-const EditRegistration = React.lazy(() => import("../pages/EditRegistration"));
 const Plans = React.lazy(() => import("../pages/Plans"));
 const Patients = React.lazy(() => import("../pages/Patients"));
 const Bookings = React.lazy(() => import("../pages/Bookings"));

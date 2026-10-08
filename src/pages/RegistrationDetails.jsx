@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { getRegistrationById } from "../apis/registration";
-import { MdArrowBack, MdDownload, MdVisibility } from "react-icons/md";
+import { getRegistrationById, getLabWalletTransactions } from "../apis/registration";
+import { MdArrowBack, MdDownload, MdVisibility, MdAccountBalanceWallet, MdCardGiftcard, MdHistory } from "react-icons/md";
 import Loader from "./ui/Loader";
 import { toast } from "react-toastify";
+import CreditWalletModal from "../components/CreditWalletModal";
 
 const RegistrationDetails = () => {
   const { id } = useParams();
@@ -12,6 +13,8 @@ const RegistrationDetails = () => {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [walletTransactions, setWalletTransactions] = useState([]);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,6 +23,14 @@ const RegistrationDetails = () => {
         const res = await getRegistrationById(id);
         if (res.success) {
           setData(res.data);
+          try {
+            const txRes = await getLabWalletTransactions(id);
+            if (txRes.success) {
+              setWalletTransactions(txRes.data.transactions || []);
+            }
+          } catch (e) {
+            console.error("Failed to load lab wallet transactions:", e);
+          }
         } else {
           toast.error("Registration not found");
           navigate("/dashboard/registrations");
@@ -33,6 +44,17 @@ const RegistrationDetails = () => {
     };
     fetchData();
   }, [id, navigate]);
+
+  const refreshWalletData = async () => {
+    try {
+      const res = await getRegistrationById(id);
+      if (res.success) setData(res.data);
+      const txRes = await getLabWalletTransactions(id);
+      if (txRes.success) setWalletTransactions(txRes.data.transactions || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   if (loading) {
     return (
@@ -278,6 +300,62 @@ const RegistrationDetails = () => {
               </div>
             </div>
 
+            {/* Wallet & Points Management Card */}
+            <div className="space-y-6">
+              <h4 className="text-xs font-black uppercase tracking-widest text-emerald-700 border-b pb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <MdAccountBalanceWallet size={16} /> Wallet & Points Management
+                </span>
+              </h4>
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 border border-emerald-200/80 rounded-xl p-5 shadow-xs">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 block">
+                      Current Wallet Balance
+                    </span>
+                    <span className="text-3xl font-black text-emerald-900 tracking-tight">
+                      ₹{data.walletBalance || 0}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsWalletModalOpen(true)}
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-xs uppercase tracking-wider shadow-sm hover:shadow-md transition-all flex items-center gap-1.5"
+                  >
+                    <MdCardGiftcard size={16} />
+                    Credit Points
+                  </button>
+                </div>
+
+                {/* Recent Wallet History */}
+                <div className="mt-4 pt-3 border-t border-emerald-200/60">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1">
+                    <MdHistory size={14} /> Recent Transactions ({walletTransactions.length})
+                  </span>
+                  {walletTransactions.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-1">No transactions recorded yet.</p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                      {walletTransactions.slice(0, 5).map((tx) => (
+                        <div key={tx._id} className="bg-white/80 border border-slate-100 rounded-lg p-2.5 flex items-center justify-between text-xs">
+                          <div>
+                            <p className="font-bold text-slate-800 line-clamp-1">{tx.description}</p>
+                            <p className="text-[10px] text-slate-400">
+                              {new Date(tx.createdAt).toLocaleDateString("en-IN", {
+                                day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+                              })}
+                            </p>
+                          </div>
+                          <span className={`font-black text-sm whitespace-nowrap ml-2 ${tx.type === "credit" ? "text-emerald-600" : "text-rose-600"}`}>
+                            {tx.type === "credit" ? "+" : "-"}₹{tx.amount}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Test Services */}
             <div className="lg:col-span-2 space-y-6">
               <h4 className="text-xs font-black uppercase tracking-widest text-secondary border-b pb-2">
@@ -367,9 +445,19 @@ const RegistrationDetails = () => {
                 ))}
               </div>
             </div>
-          </div>
         </div>
       </div>
+    </div>
+
+      {/* Credit Wallet Modal */}
+      <CreditWalletModal
+        isOpen={isWalletModalOpen}
+        lab={data}
+        onClose={() => setIsWalletModalOpen(false)}
+        onSuccess={() => {
+          refreshWalletData();
+        }}
+      />
     </div>
   );
 };

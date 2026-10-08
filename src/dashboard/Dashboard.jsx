@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef, Suspense } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import Loader from "../pages/ui/Loader";
 import { useTheme } from "../context/ThemeContext";
 import {
   MdMenu,
@@ -33,9 +34,8 @@ import {
   MdAccountBalanceWallet,
 } from "react-icons/md";
 
+import { FaMapMarkerAlt } from "react-icons/fa";
 import { Clock } from "./Clock";
-import logoo from "../assets/logo.png";
-import landLogoo from "../assets/landLogoo.png";
 import { Settings, ChevronDown } from "lucide-react";
 import Swal from "sweetalert2";
 import { getUnreadCount, getNotifications, markAsRead, markAllAsRead } from "../apis/notifications";
@@ -226,21 +226,56 @@ const Dashboard = () => {
         }}
       >
         <div
-          className="flex items-center justify-center border-b h-[61px] px-4"
+          className="flex items-center justify-center border-b h-17 px-3 select-none"
           style={{ borderColor: colors.accent + "30" }}
         >
           {sidebarOpen ? (
-            <div className="transition-all duration-500 ease-out flex items-center justify-center w-full">
+            <Link
+              to="/dashboard"
+              className="transition-all duration-300 ease-out flex items-center gap-2.5 w-full py-1 group overflow-hidden"
+            >
+              <div className="w-11 h-11 shrink-0 flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+                <img
+                  src="/logo 2.png"
+                  className="w-full h-full object-contain"
+                  alt="LABO INDIA Logo"
+                />
+              </div>
+              <div
+                className="flex flex-col justify-center border-l pl-2.5 h-10 min-w-0"
+                style={{ borderColor: isDarkMode ? "#334155" : "#e2e8f0" }}
+              >
+                <span
+                  className="text-[17px] font-black leading-none tracking-tight uppercase flex items-center"
+                  style={{ color: "#C32019" }}
+                >
+                  LABO
+                  <span className="inline-flex relative -top-[0.45em] text-[0.46em] ml-[1px] mr-[2.5px] text-[#C32019]">
+                    <FaMapMarkerAlt />
+                  </span>
+                  INDIA
+                </span>
+                <span
+                  className={`text-[8.5px] font-bold tracking-tight uppercase leading-tight mt-1 whitespace-nowrap ${
+                    isDarkMode ? "text-slate-200" : "text-black"
+                  }`}
+                >
+                  CONNECTING PATHOLOGY LABS
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <Link
+              to="/dashboard"
+              className="w-11 h-11 flex items-center justify-center transition-all duration-300 hover:scale-105"
+              title="LABO INDIA"
+            >
               <img
                 src="/logo 2.png"
-                className="max-h-18 object-contain"
-                alt="Logo"
+                className="w-9 h-9 object-contain"
+                alt="LABO INDIA"
               />
-            </div>
-          ) : (
-            <div className="w-12 h-12 flex items-center justify-center transition-all duration-500 overflow-hidden">
-              <img src="/logo 2.png" className="w-10 h-10 object-contain" alt="Logo" />
-            </div>
+            </Link>
           )}
         </div>
         <nav className="mt-5 pt-1 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
@@ -634,7 +669,15 @@ const Dashboard = () => {
           style={{ backgroundColor: colors.background }}
         >
           <div className="max-w-full h-full flex flex-col">
-            <Outlet />
+            <Suspense
+              fallback={
+                <div className="h-full w-full min-h-[400px] flex items-center justify-center py-20">
+                  <Loader />
+                </div>
+              }
+            >
+              <Outlet />
+            </Suspense>
           </div>
         </div>
       </div>
