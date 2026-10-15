@@ -16,6 +16,11 @@ export const updateRegistrationStatus = async (id, status) => {
   return response.data;
 };
 
+export const updateApprovalStatus = async (id, approvalStatus, reason = "") => {
+  const response = await api.patch(`/registrations/approval/${id}`, { approvalStatus, reason });
+  return response.data;
+};
+
 export const deleteRegistration = async (id) => {
   const response = await api.delete(`/registrations/${id}`);
   return response.data;

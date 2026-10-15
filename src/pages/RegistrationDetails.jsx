@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { getRegistrationById, getLabWalletTransactions } from "../apis/registration";
-import { MdArrowBack, MdDownload, MdVisibility, MdAccountBalanceWallet, MdCardGiftcard, MdHistory } from "react-icons/md";
+import { getRegistrationById, getLabWalletTransactions, updateApprovalStatus } from "../apis/registration";
+import { MdArrowBack, MdDownload, MdVisibility, MdAccountBalanceWallet, MdCardGiftcard, MdHistory, MdPendingActions, MdCheckCircle, MdCancel } from "react-icons/md";
 import Loader from "./ui/Loader";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import CreditWalletModal from "../components/CreditWalletModal";
 
 const RegistrationDetails = () => {
@@ -15,6 +16,59 @@ const RegistrationDetails = () => {
   const [data, setData] = useState(null);
   const [walletTransactions, setWalletTransactions] = useState([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
+
+  const handleApprovalAction = async (newStatus) => {
+    if (newStatus === "approved") {
+      const result = await Swal.fire({
+        title: "Approve Lab Registration?",
+        text: `Are you sure you want to approve "${data.labName}"? The partner will now be allowed to log in and set up their lab.`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#10b981",
+        cancelButtonColor: "#64748b",
+        confirmButtonText: "Yes, Approve",
+      });
+      if (!result.isConfirmed) return;
+
+      try {
+        setApproving(true);
+        const res = await updateApprovalStatus(id, "approved");
+        if (res.success) {
+          toast.success("Lab approved successfully!");
+          setData(res.data);
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || err.message || "Approval failed");
+      } finally {
+        setApproving(false);
+      }
+    } else if (newStatus === "rejected") {
+      const { value: reason } = await Swal.fire({
+        title: "Reject Lab Registration",
+        input: "text",
+        inputLabel: "Rejection Reason (Optional)",
+        inputPlaceholder: "Enter reason for rejection...",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        confirmButtonText: "Reject",
+      });
+      if (reason === undefined) return;
+
+      try {
+        setApproving(true);
+        const res = await updateApprovalStatus(id, "rejected", reason);
+        if (res.success) {
+          toast.info("Lab marked as rejected");
+          setData(res.data);
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || err.message || "Failed to reject");
+      } finally {
+        setApproving(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,6 +144,52 @@ const RegistrationDetails = () => {
         </div>
       </div>
 
+      {/* Pending Approval Banner */}
+      {data.approvalStatus === "pending" && (
+        <div className="mb-6 p-5 rounded-lg bg-amber-50 border border-amber-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+              <MdPendingActions size={24} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-amber-900">
+                Lab Partner Registration Pending Approval
+              </h4>
+              <p className="text-xs text-amber-700 mt-0.5">
+                This lab registered through the mobile app. Approve them to grant login access and profile activation.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+            <button
+              onClick={() => handleApprovalAction("approved")}
+              disabled={approving}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <MdCheckCircle size={16} /> Approve Partner
+            </button>
+            <button
+              onClick={() => handleApprovalAction("rejected")}
+              disabled={approving}
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            >
+              <MdCancel size={16} /> Reject
+            </button>
+          </div>
+        </div>
+      )}
+
+      {data.approvalStatus === "rejected" && (
+        <div className="mb-6 p-4 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+            <MdCancel size={20} />
+          </div>
+          <p className="text-xs font-bold text-rose-800">
+            This lab registration was rejected by Admin.
+          </p>
+        </div>
+      )}
+
       <div
         className="bg-white rounded-sm border shadow-sm overflow-hidden"
         style={{ borderColor: colors.accent + "20" }}
@@ -146,16 +246,33 @@ const RegistrationDetails = () => {
                 </span>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <span
                 className={`px-4 py-1 rounded-sm text-[10px] font-black uppercase border ${
                   data.source === "admin"
                     ? "bg-amber-100 text-amber-700 border-amber-200"
+                    : data.source === "app"
+                    ? "bg-purple-100 text-purple-700 border-purple-200"
                     : "bg-blue-100 text-blue-700 border-blue-200"
                 }`}
               >
                 Source: {data.source || "web"}
               </span>
+
+              {data.approvalStatus === "pending" ? (
+                <span className="bg-amber-100 text-amber-800 border border-amber-300 px-4 py-1 rounded-sm text-[10px] font-black uppercase">
+                  ⏳ Pending Approval
+                </span>
+              ) : data.approvalStatus === "rejected" ? (
+                <span className="bg-rose-100 text-rose-700 border border-rose-200 px-4 py-1 rounded-sm text-[10px] font-black uppercase">
+                  ✕ Rejected
+                </span>
+              ) : (
+                <span className="bg-emerald-100 text-emerald-700 border border-emerald-200 px-4 py-1 rounded-sm text-[10px] font-black uppercase">
+                  ✓ Approved
+                </span>
+              )}
+
               {data.status ? (
                 <span className="bg-green-100 text-green-700 px-4 py-1 rounded-sm text-[10px] font-black uppercase">
                   Active Record

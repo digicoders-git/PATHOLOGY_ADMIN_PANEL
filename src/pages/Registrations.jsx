@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   getAllRegistrations,
   updateRegistrationStatus,
+  updateApprovalStatus,
   deleteRegistration,
   bulkCreateRegistrations,
   toggleFeatured,
@@ -24,6 +25,8 @@ import {
   MdKeyboardArrowDown,
   MdOutlineScience,
   MdAccountBalanceWallet,
+  MdCheckCircle,
+  MdCancel,
 } from "react-icons/md";
 import CreditWalletModal from "../components/CreditWalletModal";
 import Loader from "./ui/Loader";
@@ -49,6 +52,7 @@ const Registrations = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+  const [approvalFilter, setApprovalFilter] = useState("");
   const [regType, setRegType] = useState(
     searchParams.get("regType") || "individual",
   ); // 'individual' or 'parent'
@@ -71,6 +75,7 @@ const Registrations = () => {
   const [togglingId, setTogglingId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [featuringId, setFeaturingId] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
   const [importing, setImporting] = useState(false);
   const [walletModalLab, setWalletModalLab] = useState(null);
   const fileInputRef = useRef(null);
@@ -312,6 +317,7 @@ const Registrations = () => {
         status: statusFilter,
         type: typeFilter,
         source: sourceFilter,
+        approvalStatus: approvalFilter,
         regType: regType,
         parentId: parentIdFilter,
       });
@@ -331,6 +337,7 @@ const Registrations = () => {
     statusFilter,
     typeFilter,
     sourceFilter,
+    approvalFilter,
     regType,
     parentIdFilter,
   ]);
@@ -407,6 +414,58 @@ const Registrations = () => {
     },
     [colors.primary, fetchData],
   );
+
+  const handleApproval = async (id, newStatus, labName) => {
+    if (newStatus === "approved") {
+      const result = await Swal.fire({
+        title: "Approve Lab Registration?",
+        text: `Are you sure you want to approve "${labName || 'this lab'}"? The lab partner will now be allowed to log in and set up their lab.`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#10b981",
+        cancelButtonColor: "#64748b",
+        confirmButtonText: "Yes, Approve",
+      });
+      if (!result.isConfirmed) return;
+
+      try {
+        setApprovingId(id);
+        const res = await updateApprovalStatus(id, "approved");
+        if (res.success) {
+          toast.success(`Lab "${labName}" approved successfully!`);
+          fetchData();
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || err.message || "Approval failed");
+      } finally {
+        setApprovingId(null);
+      }
+    } else if (newStatus === "rejected") {
+      const { value: reason } = await Swal.fire({
+        title: "Reject Lab Registration",
+        input: "text",
+        inputLabel: "Rejection Reason (Optional)",
+        inputPlaceholder: "Enter reason for rejection...",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        confirmButtonText: "Reject",
+      });
+      if (reason === undefined) return;
+
+      try {
+        setApprovingId(id);
+        const res = await updateApprovalStatus(id, "rejected", reason);
+        if (res.success) {
+          toast.info(`Lab "${labName}" marked as rejected`);
+          fetchData();
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || err.message || "Failed to reject");
+      } finally {
+        setApprovingId(null);
+      }
+    }
+  };
 
   const viewDetails = (id) => {
     navigate(`/dashboard/registration-details/${id}`);
@@ -586,6 +645,24 @@ const Registrations = () => {
                 label: `${s.label} (${s.count})`,
                 value: s.value,
               })) || []),
+            ]}
+          />
+          <ModernSelect
+            value={approvalFilter}
+            onChange={(val) => {
+              setApprovalFilter(val);
+              setPage(1);
+            }}
+            options={[
+              { label: "All Approvals", value: "" },
+              ...(stats.approvalStatus?.map((a) => ({
+                label: `${a.label} (${a.count})`,
+                value: a.value,
+              })) || [
+                { label: "Pending", value: "pending" },
+                { label: "Approved", value: "approved" },
+                { label: "Rejected", value: "rejected" },
+              ]),
             ]}
           />
           {regType === "parent" && (
@@ -814,6 +891,9 @@ const Registrations = () => {
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
                   Source
                 </th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
+                  Approval
+                </th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
                   Status
                 </th>
@@ -891,11 +971,38 @@ const Registrations = () => {
                         className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-sm border ${
                           item.source === "admin"
                             ? "bg-amber-100 text-amber-700 border-amber-200"
+                            : item.source === "app"
+                            ? "bg-purple-100 text-purple-700 border-purple-200"
                             : "bg-blue-100 text-blue-700 border-blue-200"
                         }`}
                       >
                         {item.source || "web"}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {item.approvalStatus === "pending" ? (
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                            ⏳ Pending
+                          </span>
+                          <button
+                            onClick={() => handleApproval(item._id, "approved", item.labName)}
+                            disabled={approvingId === item._id}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            title="Approve Partner"
+                          >
+                            <MdCheckCircle size={13} /> Approve
+                          </button>
+                        </div>
+                      ) : item.approvalStatus === "rejected" ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                          ✕ Rejected
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                          ✓ Approved
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <Toggle
