@@ -971,16 +971,16 @@ const Registrations = () => {
                         className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-sm border ${
                           item.source === "admin"
                             ? "bg-amber-100 text-amber-700 border-amber-200"
-                            : item.source === "app"
+                            : (item.source === "app" || (item.description && item.description.toLowerCase().includes("app")))
                             ? "bg-purple-100 text-purple-700 border-purple-200"
                             : "bg-blue-100 text-blue-700 border-blue-200"
                         }`}
                       >
-                        {item.source || "web"}
+                        {(item.source === "app" || (item.description && item.description.toLowerCase().includes("app"))) ? "app" : (item.source || "web")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {item.approvalStatus === "pending" ? (
+                      {(item.approvalStatus === "pending" || (!item.status && item.approvalStatus !== "rejected")) ? (
                         <div className="flex flex-col items-center gap-1.5">
                           <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
                             ⏳ Pending

@@ -145,7 +145,7 @@ const RegistrationDetails = () => {
       </div>
 
       {/* Pending Approval Banner */}
-      {data.approvalStatus === "pending" && (
+      {(data.approvalStatus === "pending" || (!data.status && data.approvalStatus !== "rejected")) && (
         <div className="mb-6 p-5 rounded-lg bg-amber-50 border border-amber-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">

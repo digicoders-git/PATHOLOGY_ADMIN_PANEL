@@ -17,8 +17,16 @@ export const updateRegistrationStatus = async (id, status) => {
 };
 
 export const updateApprovalStatus = async (id, approvalStatus, reason = "") => {
-  const response = await api.patch(`/registrations/approval/${id}`, { approvalStatus, reason });
-  return response.data;
+  try {
+    const response = await api.patch(`/registrations/approval/${id}`, { approvalStatus, reason });
+    return response.data;
+  } catch (err) {
+    if (err?.response?.status === 404) {
+      const status = approvalStatus === "approved";
+      return await updateRegistrationStatus(id, status);
+    }
+    throw err;
+  }
 };
 
 export const deleteRegistration = async (id) => {
