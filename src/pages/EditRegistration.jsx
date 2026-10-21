@@ -162,6 +162,8 @@ const EditRegistration = () => {
     ifscCode: "",
     staffCount: "",
     pathologyDocs: null,
+    cmoCertificate: null,
+    gstin: "",
     certifications: [{ name: "", file: null }],
     pricingItems: [],
     status: true,
@@ -174,6 +176,7 @@ const EditRegistration = () => {
     labLogo: null,
     labBanner: null,
     pathologyDocs: null,
+    cmoCertificate: null,
     certifications: [],
   });
 
@@ -258,12 +261,14 @@ const EditRegistration = () => {
             password: reg.password || "",
             latitude: reg.latitude || "",
             longitude: reg.longitude || "",
+            gstin: reg.gstin || "",
           });
 
           setExistingFiles({
             labLogo: reg.labLogo,
             labBanner: reg.labBanner,
             pathologyDocs: reg.pathologyDocs,
+            cmoCertificate: reg.cmoCertificate,
             certifications: reg.Certification || [],
           });
         }
@@ -388,6 +393,7 @@ const EditRegistration = () => {
         labType: formData.labType,
         establishmentYear: formData.establishmentYear,
         registrationNumber: formData.registrationNumber,
+        gstin: formData.gstin,
         description: formData.description,
         fullAddress: formData.fullAddress,
         areaName: formData.areaName,
@@ -428,6 +434,8 @@ const EditRegistration = () => {
         data.append("labBanner", formData.labBanner);
       if (formData.pathologyDocs instanceof File)
         data.append("pathologyDocs", formData.pathologyDocs);
+      if (formData.cmoCertificate instanceof File)
+        data.append("cmoCertificate", formData.cmoCertificate);
 
       data.append("selectedTests", JSON.stringify(formData.selectedTests));
 
@@ -582,7 +590,7 @@ const EditRegistration = () => {
                 style={inputStyle}
               />
             </div>
-            <div className="md:col-span-3">
+            <div>
               <label className={labelStyle}>Registration Number *</label>
               <input
                 type="text"
@@ -591,6 +599,22 @@ const EditRegistration = () => {
                 onChange={handleChange}
                 style={inputStyle}
                 required
+              />
+            </div>
+            <div>
+              <label className={labelStyle}>GSTIN Number</label>
+              <input
+                type="text"
+                name="gstin"
+                value={formData.gstin}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    gstin: e.target.value.toUpperCase(),
+                  }))
+                }
+                style={inputStyle}
+                placeholder="e.g. 22AAAAA0000A1Z5"
               />
             </div>
             <div className="md:col-span-3">
@@ -1049,6 +1073,94 @@ const EditRegistration = () => {
               </button>
             </div>
           ))}
+        </div>
+
+        {/* Registration Documents */}
+        <div
+          className={groupStyle}
+          style={{
+            backgroundColor: colors.background,
+            borderColor: colors.accent + "20",
+          }}
+        >
+          <h2 className="text-xs font-black uppercase mb-4 border-b pb-2 opacity-80">
+            Registration Documents
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              className="border border-dashed p-6 rounded text-center"
+              style={{ borderColor: colors.accent + "30" }}
+            >
+              <label className={labelStyle}>Pathology License / Document</label>
+              {existingFiles.pathologyDocs && !formData.pathologyDocs && (
+                <a
+                  href={existingFiles.pathologyDocs}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold text-blue-600 underline block mb-3"
+                >
+                  📄 View Existing Pathology Document
+                </a>
+              )}
+              <input
+                type="file"
+                name="pathologyDocs"
+                onChange={handleChange}
+                className="hidden"
+                id="edit-pathology-docs-input"
+              />
+              <label
+                htmlFor="edit-pathology-docs-input"
+                className="cursor-pointer flex flex-col items-center gap-2"
+              >
+                <MdCloudUpload size={28} className="opacity-40" />
+                <span className="text-[10px] font-bold">
+                  {formData.pathologyDocs
+                    ? formData.pathologyDocs.name
+                    : existingFiles.pathologyDocs
+                    ? "Change Pathology Document"
+                    : "Upload Pathology Document"}
+                </span>
+              </label>
+            </div>
+
+            <div
+              className="border border-dashed p-6 rounded text-center"
+              style={{ borderColor: colors.accent + "30" }}
+            >
+              <label className={labelStyle}>CMO Certificate (Clinical Establishment ACT)</label>
+              {existingFiles.cmoCertificate && !formData.cmoCertificate && (
+                <a
+                  href={existingFiles.cmoCertificate}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold text-blue-600 underline block mb-3"
+                >
+                  📄 View Existing CMO Certificate
+                </a>
+              )}
+              <input
+                type="file"
+                name="cmoCertificate"
+                onChange={handleChange}
+                className="hidden"
+                id="edit-cmo-input"
+              />
+              <label
+                htmlFor="edit-cmo-input"
+                className="cursor-pointer flex flex-col items-center gap-2"
+              >
+                <MdCloudUpload size={28} className="opacity-40 text-blue-600" />
+                <span className="text-[10px] font-bold">
+                  {formData.cmoCertificate
+                    ? formData.cmoCertificate.name
+                    : existingFiles.cmoCertificate
+                    ? "Change CMO Certificate"
+                    : "Upload CMO Certificate"}
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end mt-10">

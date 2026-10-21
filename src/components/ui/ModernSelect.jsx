@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTheme } from "../../context/ThemeContext";
-import { ChevronDown } from "lucide-react";
+import { MdKeyboardArrowDown } from "react-icons/md";
 
 const ModernSelect = React.memo(
   ({
@@ -58,7 +58,7 @@ const ModernSelect = React.memo(
             <span className={!selectedOption ? "opacity-50" : ""}>
               {selectedOption ? selectedOption.label : placeholder}
             </span>
-            <ChevronDown
+            <MdKeyboardArrowDown
               className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
               size={18}
             />

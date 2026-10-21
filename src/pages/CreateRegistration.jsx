@@ -69,6 +69,8 @@ const CreateRegistration = () => {
     ifscCode: "",
     staffCount: "",
     pathologyDocs: null,
+    cmoCertificate: null,
+    gstin: "",
     certifications: [],
     pricingItems: [],
     status: true,
@@ -251,6 +253,7 @@ const CreateRegistration = () => {
         labType: formData.labType,
         establishmentYear: formData.establishmentYear,
         registrationNumber: formData.registrationNumber,
+        gstin: formData.gstin,
         description: formData.description,
         fullAddress: formData.fullAddress,
         areaName: formData.areaName,
@@ -296,6 +299,8 @@ const CreateRegistration = () => {
       if (formData.labBanner) data.append("labBanner", formData.labBanner);
       if (formData.pathologyDocs)
         data.append("pathologyDocs", formData.pathologyDocs);
+      if (formData.cmoCertificate)
+        data.append("cmoCertificate", formData.cmoCertificate);
 
       if (formData.selectedTests.length > 0) {
         data.append("selectedTests", JSON.stringify(formData.selectedTests));
@@ -466,7 +471,7 @@ const CreateRegistration = () => {
                 style={inputStyle}
               />
             </div>
-            <div className="md:col-span-2">
+            <div>
               <label className={labelStyle}>Registration Number *</label>
               <input
                 type="text"
@@ -475,6 +480,22 @@ const CreateRegistration = () => {
                 onChange={handleChange}
                 style={inputStyle}
                 required
+              />
+            </div>
+            <div>
+              <label className={labelStyle}>GSTIN Number</label>
+              <input
+                type="text"
+                name="gstin"
+                value={formData.gstin}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    gstin: e.target.value.toUpperCase(),
+                  }))
+                }
+                style={inputStyle}
+                placeholder="e.g. 22AAAAA0000A1Z5"
               />
             </div>
             {/* <div>
@@ -972,32 +993,60 @@ const CreateRegistration = () => {
           <h2 className="text-xs font-black uppercase mb-4 border-b pb-2 opacity-80">
             Pathology Registration Documents
           </h2>
-          <div
-            className="border border-dashed p-6 rounded text-center"
-            style={{ borderColor: colors.accent + "30" }}
-          >
-            <input
-              type="file"
-              name="pathologyDocs"
-              onChange={handleChange}
-              className="hidden"
-              id="docs-input"
-            />
-            <label
-              htmlFor="docs-input"
-              className="cursor-pointer flex flex-col items-center gap-3"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              className="border border-dashed p-6 rounded text-center"
+              style={{ borderColor: colors.accent + "30" }}
             >
-              <MdCloudUpload size={32} className="opacity-40" />
-              <div className="text-xs font-bold uppercase tracking-widest">
-                {formData.pathologyDocs
-                  ? formData.pathologyDocs.name
-                  : "Select Registration Documents (PDF/Docs)"}
-              </div>
-              <div className="text-[9px] opacity-50">
-                Upload building fitness, fire NOC or clinical establishment
-                certificate
-              </div>
-            </label>
+              <input
+                type="file"
+                name="pathologyDocs"
+                onChange={handleChange}
+                className="hidden"
+                id="docs-input"
+              />
+              <label
+                htmlFor="docs-input"
+                className="cursor-pointer flex flex-col items-center gap-3"
+              >
+                <MdCloudUpload size={32} className="opacity-40" />
+                <div className="text-xs font-bold uppercase tracking-widest">
+                  {formData.pathologyDocs
+                    ? formData.pathologyDocs.name
+                    : "Select Registration Documents (PDF/Docs)"}
+                </div>
+                <div className="text-[9px] opacity-50">
+                  Upload building fitness, fire NOC or pathology license
+                </div>
+              </label>
+            </div>
+
+            <div
+              className="border border-dashed p-6 rounded text-center"
+              style={{ borderColor: colors.accent + "30" }}
+            >
+              <input
+                type="file"
+                name="cmoCertificate"
+                onChange={handleChange}
+                className="hidden"
+                id="cmo-input"
+              />
+              <label
+                htmlFor="cmo-input"
+                className="cursor-pointer flex flex-col items-center gap-3"
+              >
+                <MdCloudUpload size={32} className="opacity-40 text-blue-600" />
+                <div className="text-xs font-bold uppercase tracking-widest">
+                  {formData.cmoCertificate
+                    ? formData.cmoCertificate.name
+                    : "CMO Certificate (Clinical Establishment ACT)"}
+                </div>
+                <div className="text-[9px] opacity-50">
+                  Upload CMO Certificate / Clinical Establishment ACT registration
+                </div>
+              </label>
+            </div>
           </div>
         </div>
 

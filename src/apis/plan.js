@@ -45,4 +45,14 @@ export const togglePlanStatus = async (id) => {
   }
 };
 
+export const reorderPlans = async (orderedIds) => {
+  try {
+    const res = await api.put('/plans/reorder', { orderedIds });
+    return res.data;
+  } catch (error) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+};
+
+
 

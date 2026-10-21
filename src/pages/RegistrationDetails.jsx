@@ -356,6 +356,7 @@ const RegistrationDetails = () => {
                   label="Registration No"
                   value={data.registrationNumber}
                 />
+                <InfoItem label="GSTIN Number" value={data.gstin || "N/A"} />
                 {/* <InfoItem label="License No" value={data.license || "N/A"} /> */}
               </div>
             </div>
@@ -546,6 +547,9 @@ const RegistrationDetails = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {data.pathologyDocs && (
                   <DocCard label="Pathology Docs" url={data.pathologyDocs} />
+                )}
+                {data.cmoCertificate && (
+                  <DocCard label="CMO Certificate (Clinical Establishment ACT)" url={data.cmoCertificate} />
                 )}
                 {data.labBanner && (
                   <DocCard label="Lab Banner" url={data.labBanner} isImage />
