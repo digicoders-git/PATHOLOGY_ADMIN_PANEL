@@ -195,7 +195,6 @@ const Dashboard = () => {
       path: "/dashboard/lab-test-pricing",
     },
     { name: "Support Queries", icon: MdQuestionAnswer, path: "/dashboard/support-queries" },
-    { name: "Wallet Withdrawals", icon: MdAccountBalanceWallet, path: "/dashboard/wallet-withdrawals" },
     { name: "Profile", icon: MdPerson, path: "/dashboard/profile" },
     { name: "Notifications", icon: MdNotifications, path: "/dashboard/notifications" },
   ];
