@@ -53,6 +53,7 @@ const Registrations = () => {
   const [typeFilter, setTypeFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [approvalFilter, setApprovalFilter] = useState("");
+  const [profileFilter, setProfileFilter] = useState("");
   const [regType, setRegType] = useState(
     searchParams.get("regType") || "individual",
   ); // 'individual' or 'parent'
@@ -318,6 +319,7 @@ const Registrations = () => {
         type: typeFilter,
         source: sourceFilter,
         approvalStatus: approvalFilter,
+        isProfileComplete: profileFilter,
         regType: regType,
         parentId: parentIdFilter,
       });
@@ -338,6 +340,7 @@ const Registrations = () => {
     typeFilter,
     sourceFilter,
     approvalFilter,
+    profileFilter,
     regType,
     parentIdFilter,
   ]);
@@ -461,6 +464,36 @@ const Registrations = () => {
         }
       } catch (err) {
         toast.error(err?.response?.data?.message || err.message || "Failed to reject");
+      } finally {
+        setApprovingId(null);
+      }
+    } else if (newStatus === "hold") {
+      const { value: query } = await Swal.fire({
+        title: "Put Registration on Hold / Query",
+        text: `Enter the query or details mismatch for "${labName}". This will be shown to the lab partner to resolve without rejecting them.`,
+        input: "textarea",
+        inputLabel: "Admin Query / Correction Needed",
+        inputPlaceholder: "e.g., Address proof document is unclear, please update...",
+        inputValidator: (value) => {
+          if (!value || !value.trim()) {
+            return "Please enter a query or reason for holding the registration!";
+          }
+        },
+        showCancelButton: true,
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "Send Query & Put on Hold",
+      });
+      if (!query) return;
+
+      try {
+        setApprovingId(id);
+        const res = await updateApprovalStatus(id, "hold", query);
+        if (res.success) {
+          toast.warning(`Lab "${labName}" put on hold with query sent.`);
+          fetchData();
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || err.message || "Failed to set hold status");
       } finally {
         setApprovingId(null);
       }
@@ -660,9 +693,22 @@ const Registrations = () => {
                 value: a.value,
               })) || [
                 { label: "Pending", value: "pending" },
+                { label: "On Hold (Query)", value: "hold" },
                 { label: "Approved", value: "approved" },
                 { label: "Rejected", value: "rejected" },
               ]),
+            ]}
+          />
+          <ModernSelect
+            value={profileFilter}
+            onChange={(val) => {
+              setProfileFilter(val);
+              setPage(1);
+            }}
+            options={[
+              { label: "All Profiles", value: "" },
+              { label: "⚠️ Incomplete Profiles", value: "false" },
+              { label: "✓ Complete Profiles", value: "true" },
             ]}
           />
           {regType === "parent" && (
@@ -894,6 +940,9 @@ const Registrations = () => {
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
                   Approval
                 </th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
+                  Profile
+                </th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
                   Status
                 </th>
@@ -908,13 +957,13 @@ const Registrations = () => {
             <tbody className="divide-y divide-black/5">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="py-20 text-center">
+                  <td colSpan="10" className="py-20 text-center">
                     <Loader />
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-20 text-center opacity-40">
+                  <td colSpan="10" className="py-20 text-center opacity-40">
                     No registrations found
                   </td>
                 </tr>
@@ -980,19 +1029,66 @@ const Registrations = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {(item.approvalStatus === "pending" || (!item.status && item.approvalStatus !== "rejected")) ? (
+                      {(item.approvalStatus === "pending" || (!item.status && item.approvalStatus !== "rejected" && item.approvalStatus !== "hold")) ? (
                         <div className="flex flex-col items-center gap-1.5">
                           <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
                             ⏳ Pending
                           </span>
-                          <button
-                            onClick={() => handleApproval(item._id, "approved", item.labName)}
-                            disabled={approvingId === item._id}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                            title="Approve Partner"
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleApproval(item._id, "approved", item.labName)}
+                              disabled={approvingId === item._id}
+                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="Approve Partner"
+                            >
+                              <MdCheckCircle size={12} /> Approve
+                            </button>
+                            <button
+                              onClick={() => handleApproval(item._id, "hold", item.labName)}
+                              disabled={approvingId === item._id}
+                              className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="Put on Hold with Query"
+                            >
+                              Query
+                            </button>
+                          </div>
+                        </div>
+                      ) : item.approvalStatus === "hold" ? (
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span
+                            onClick={() => Swal.fire({ title: "Admin Query / Hold Reason", text: item.adminQuery || "No query text specified.", icon: "info" })}
+                            className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-300 cursor-pointer shadow-xs hover:bg-orange-200"
+                            title="Click to view full query"
                           >
-                            <MdCheckCircle size={13} /> Approve
-                          </button>
+                            ⏸️ On Hold
+                          </span>
+                          {item.adminQuery && (
+                            <span 
+                              onClick={() => Swal.fire({ title: "Admin Query", text: item.adminQuery, icon: "info" })}
+                              className="text-[9.5px] text-orange-700 font-medium max-w-[120px] truncate cursor-pointer underline decoration-dotted" 
+                              title={item.adminQuery}
+                            >
+                              "{item.adminQuery}"
+                            </span>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleApproval(item._id, "approved", item.labName)}
+                              disabled={approvingId === item._id}
+                              className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="Approve Partner"
+                            >
+                              <MdCheckCircle size={12} /> Approve
+                            </button>
+                            <button
+                              onClick={() => handleApproval(item._id, "hold", item.labName)}
+                              disabled={approvingId === item._id}
+                              className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="Edit Admin Query"
+                            >
+                              Edit
+                            </button>
+                          </div>
                         </div>
                       ) : item.approvalStatus === "rejected" ? (
                         <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
@@ -1001,6 +1097,17 @@ const Registrations = () => {
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
                           ✓ Approved
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {item.isProfileComplete ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          ✓ Complete
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                          ⚠️ Incomplete
                         </span>
                       )}
                     </td>

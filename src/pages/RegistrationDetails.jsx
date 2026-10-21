@@ -67,6 +67,33 @@ const RegistrationDetails = () => {
       } finally {
         setApproving(false);
       }
+    } else if (newStatus === "hold") {
+      const { value: query } = await Swal.fire({
+        title: "Put Registration on Hold / Query",
+        text: "Specify what information or document is mismatched or needs clarification. The lab will see this message.",
+        input: "textarea",
+        inputLabel: "Admin Query / Correction Needed",
+        inputValue: data.adminQuery || "",
+        inputPlaceholder: "e.g., Certificate is blurry or address proof mismatch...",
+        inputValidator: (val) => !val?.trim() ? "Please enter a query!" : null,
+        showCancelButton: true,
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "Send Query & Put on Hold",
+      });
+      if (!query) return;
+
+      try {
+        setApproving(true);
+        const res = await updateApprovalStatus(id, "hold", query);
+        if (res.success) {
+          toast.warning("Lab put on hold with query sent successfully!");
+          setData(res.data);
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || err.message || "Failed to update status");
+      } finally {
+        setApproving(false);
+      }
     }
   };
 
@@ -145,7 +172,7 @@ const RegistrationDetails = () => {
       </div>
 
       {/* Pending Approval Banner */}
-      {(data.approvalStatus === "pending" || (!data.status && data.approvalStatus !== "rejected")) && (
+      {(data.approvalStatus === "pending" || (!data.status && data.approvalStatus !== "rejected" && data.approvalStatus !== "hold")) && (
         <div className="mb-6 p-5 rounded-lg bg-amber-50 border border-amber-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
@@ -156,17 +183,71 @@ const RegistrationDetails = () => {
                 Lab Partner Registration Pending Approval
               </h4>
               <p className="text-xs text-amber-700 mt-0.5">
-                This lab registered through the mobile app. Approve them to grant login access and profile activation.
+                This lab registered through the mobile app. Approve them to grant login access or send a query if details are mismatched.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+          <div className="flex items-center gap-2 self-end md:self-auto shrink-0 flex-wrap">
             <button
               onClick={() => handleApprovalAction("approved")}
               disabled={approving}
               className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <MdCheckCircle size={16} /> Approve Partner
+            </button>
+            <button
+              onClick={() => handleApprovalAction("hold")}
+              disabled={approving}
+              className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <MdPendingActions size={16} /> Put on Hold / Query
+            </button>
+            <button
+              onClick={() => handleApprovalAction("rejected")}
+              disabled={approving}
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            >
+              <MdCancel size={16} /> Reject
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* On Hold / Query Banner */}
+      {data.approvalStatus === "hold" && (
+        <div className="mb-6 p-5 rounded-lg bg-orange-50 border border-orange-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+              <MdPendingActions size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-200 text-orange-900 border border-orange-300">
+                  ⏸️ Verification on Hold
+                </span>
+                <h4 className="text-sm font-bold text-orange-950">
+                  Admin Query Sent to Lab
+                </h4>
+              </div>
+              <p className="text-xs font-medium text-orange-900 mt-1 bg-white/80 p-2 rounded border border-orange-200">
+                "{data.adminQuery || "No query details specified."}"
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end md:self-auto shrink-0 flex-wrap">
+            <button
+              onClick={() => handleApprovalAction("approved")}
+              disabled={approving}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <MdCheckCircle size={16} /> Approve Lab
+            </button>
+            <button
+              onClick={() => handleApprovalAction("hold")}
+              disabled={approving}
+              className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <MdPendingActions size={16} /> Edit Query
             </button>
             <button
               onClick={() => handleApprovalAction("rejected")}
