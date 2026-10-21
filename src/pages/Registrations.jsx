@@ -422,12 +422,12 @@ const Registrations = () => {
     if (newStatus === "approved") {
       const result = await Swal.fire({
         title: "Approve Lab Registration?",
-        text: `Are you sure you want to approve "${labName || 'this lab'}"? The lab partner will now be allowed to log in and set up their lab.`,
+        text: `Are you sure you want to approve "${labName || 'this lab'}"? The lab partner will be allowed to log in and 100 welcome bonus points will be credited to their wallet.`,
         icon: "question",
         showCancelButton: true,
         confirmButtonColor: "#10b981",
         cancelButtonColor: "#64748b",
-        confirmButtonText: "Yes, Approve",
+        confirmButtonText: "Yes, Approve & Unlock Bonus",
       });
       if (!result.isConfirmed) return;
 
@@ -993,9 +993,16 @@ const Registrations = () => {
                             Affiliated: {item.parent.name}
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-sm w-fit mt-1">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-sm w-fit mt-1 border ${
+                          item.approvalStatus === "approved"
+                            ? "text-emerald-700 bg-emerald-50 border-emerald-200/80"
+                            : "text-slate-500 bg-slate-50 border-slate-200/80"
+                        }`}>
                           <MdAccountBalanceWallet size={12} />
                           ₹{item.walletBalance || 0}
+                          {item.approvalStatus !== "approved" && (
+                            <span className="text-[8.5px] font-medium text-slate-400 ml-0.5">(Locked)</span>
+                          )}
                         </span>
                       </div>
                     </td>

@@ -22,12 +22,12 @@ const RegistrationDetails = () => {
     if (newStatus === "approved") {
       const result = await Swal.fire({
         title: "Approve Lab Registration?",
-        text: `Are you sure you want to approve "${data.labName}"? The partner will now be allowed to log in and set up their lab.`,
+        text: `Are you sure you want to approve "${data.labName}"? The partner will be allowed to log in and 100 welcome bonus points will be credited to their wallet.`,
         icon: "question",
         showCancelButton: true,
         confirmButtonColor: "#10b981",
         cancelButtonColor: "#64748b",
-        confirmButtonText: "Yes, Approve",
+        confirmButtonText: "Yes, Approve & Unlock Bonus",
       });
       if (!result.isConfirmed) return;
 
