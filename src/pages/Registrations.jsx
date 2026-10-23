@@ -921,40 +921,40 @@ const Registrations = () => {
             /* ── INDIVIDUAL FLAT VIEW ── */
             <table className="w-full text-left border-collapse">
             <thead>
-              <tr style={{ backgroundColor: colors.accent + "05" }}>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
+              <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600">
+                <th className="px-3.5 py-3.5 text-xs font-bold uppercase tracking-wider text-center w-12 opacity-70">
                   #
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider min-w-[210px] opacity-70">
                   Lab Details
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider min-w-[130px] opacity-70">
                   Owner
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider whitespace-nowrap opacity-70">
                   Type
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-center whitespace-nowrap opacity-70">
                   Source
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-center min-w-[160px] opacity-70">
                   Approval
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-center whitespace-nowrap opacity-70">
                   Profile
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-center whitespace-nowrap opacity-70">
                   Status
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-center">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-center whitespace-nowrap opacity-70">
                   Featured
                 </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider opacity-60 text-right">
+                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-right whitespace-nowrap opacity-70">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/5">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
                 <tr>
                   <td colSpan="10" className="py-20 text-center">
@@ -971,89 +971,85 @@ const Registrations = () => {
                 data.map((item, index) => (
                   <tr
                     key={item._id}
-                    className="hover:bg-black/5 transition-colors group"
+                    className="hover:bg-slate-50/80 transition-colors group"
                   >
-                    <td className="px-6 py-4 text-sm font-medium opacity-40">
+                    <td className="px-3.5 py-3.5 text-xs font-semibold text-slate-400 text-center">
                       {(pagination.page - 1) * pagination.limit + index + 1}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3.5">
                       <div className="flex flex-col">
                         <span
-                          className="text-sm font-bold"
-                          style={{ color: colors.text }}
+                          className="text-sm font-bold text-slate-800 group-hover:text-primary transition-colors"
                         >
                           {item.labName}
                         </span>
-                        <span className="text-[10px] opacity-60">
+                        <span className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
                           {item.areaName ? `${item.areaName}, ` : ""}
                           {item.city}, {item.state}
                         </span>
                         {item.parent && (
-                          <span className="text-[10px] font-black uppercase text-secondary mt-1 tracking-wider opacity-80">
+                          <span className="text-[9.5px] font-bold uppercase text-indigo-600 mt-0.5 tracking-wider">
                             Affiliated: {item.parent.name}
                           </span>
                         )}
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-sm w-fit mt-1 border ${
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md w-fit mt-1.5 border ${
                           item.approvalStatus === "approved"
-                            ? "text-emerald-700 bg-emerald-50 border-emerald-200/80"
-                            : "text-slate-500 bg-slate-50 border-slate-200/80"
+                            ? "text-emerald-700 bg-emerald-50 border-emerald-200/80 shadow-xs"
+                            : "text-slate-600 bg-slate-100/80 border-slate-200"
                         }`}>
-                          <MdAccountBalanceWallet size={12} />
+                          <MdAccountBalanceWallet size={12} className={item.approvalStatus === "approved" ? "text-emerald-600" : "text-slate-400"} />
                           ₹{item.walletBalance || 0}
                           {item.approvalStatus !== "approved" && (
-                            <span className="text-[8.5px] font-medium text-slate-400 ml-0.5">(Locked)</span>
+                            <span className="text-[9px] font-normal text-slate-400 ml-0.5">(Locked)</span>
                           )}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3.5">
                       <div className="flex flex-col">
-                        <span className="text-sm">{item.ownerName}</span>
-                        <span className="text-[10px] opacity-60">
-                          {item.phone}
+                        <span className="text-xs font-bold text-slate-800">{item.ownerName || "—"}</span>
+                        <span className="text-[11px] text-slate-500 font-mono mt-0.5">
+                          {item.phone || "—"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className="text-sm font-bold uppercase tracking-tight"
-                        style={{ color: colors.text }}
-                      >
-                        {item.labType || "N/A"}
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="inline-block text-[11px] font-bold uppercase px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 tracking-wide">
+                        {item.labType || "Pathology"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
                       <span
-                        className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-sm border ${
+                        className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${
                           item.source === "admin"
-                            ? "bg-amber-100 text-amber-700 border-amber-200"
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
                             : (item.source === "app" || (item.description && item.description.toLowerCase().includes("app")))
-                            ? "bg-purple-100 text-purple-700 border-purple-200"
-                            : "bg-blue-100 text-blue-700 border-blue-200"
+                            ? "bg-purple-50 text-purple-700 border-purple-200"
+                            : "bg-blue-50 text-blue-700 border-blue-200"
                         }`}
                       >
-                        {(item.source === "app" || (item.description && item.description.toLowerCase().includes("app"))) ? "app" : (item.source || "web")}
+                        {(item.source === "app" || (item.description && item.description.toLowerCase().includes("app"))) ? "App" : (item.source || "Web")}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center">
                       {(item.approvalStatus === "pending" || (!item.status && item.approvalStatus !== "rejected" && item.approvalStatus !== "hold")) ? (
                         <div className="flex flex-col items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300">
                             ⏳ Pending
                           </span>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleApproval(item._id, "approved", item.labName)}
                               disabled={approvingId === item._id}
-                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10.5px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
                               title="Approve Partner"
                             >
-                              <MdCheckCircle size={12} /> Approve
+                              <MdCheckCircle size={11} /> Approve
                             </button>
                             <button
                               onClick={() => handleApproval(item._id, "hold", item.labName)}
                               disabled={approvingId === item._id}
-                              className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10.5px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
                               title="Put on Hold with Query"
                             >
                               Query
@@ -1064,7 +1060,7 @@ const Registrations = () => {
                         <div className="flex flex-col items-center gap-1.5">
                           <span
                             onClick={() => Swal.fire({ title: "Admin Query / Hold Reason", text: item.adminQuery || "No query text specified.", icon: "info" })}
-                            className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-300 cursor-pointer shadow-xs hover:bg-orange-200"
+                            className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-800 border border-orange-300 cursor-pointer shadow-xs hover:bg-orange-100"
                             title="Click to view full query"
                           >
                             ⏸️ On Hold
@@ -1072,25 +1068,25 @@ const Registrations = () => {
                           {item.adminQuery && (
                             <span 
                               onClick={() => Swal.fire({ title: "Admin Query", text: item.adminQuery, icon: "info" })}
-                              className="text-[9.5px] text-orange-700 font-medium max-w-[120px] truncate cursor-pointer underline decoration-dotted" 
+                              className="text-[10px] text-orange-700 font-medium max-w-[130px] truncate cursor-pointer hover:underline bg-orange-50/80 px-2 py-0.5 rounded border border-orange-200/60" 
                               title={item.adminQuery}
                             >
-                              "{item.adminQuery}"
+                              "{item.adminQuery.replace(/^["'!]+|["'!]+$/g, '').trim()}"
                             </span>
                           )}
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleApproval(item._id, "approved", item.labName)}
                               disabled={approvingId === item._id}
-                              className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10.5px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
                               title="Approve Partner"
                             >
-                              <MdCheckCircle size={12} /> Approve
+                              <MdCheckCircle size={11} /> Approve
                             </button>
                             <button
                               onClick={() => handleApproval(item._id, "hold", item.labName)}
                               disabled={approvingId === item._id}
-                              className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10.5px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
                               title="Edit Admin Query"
                             >
                               Edit
@@ -1098,87 +1094,89 @@ const Registrations = () => {
                           </div>
                         </div>
                       ) : item.approvalStatus === "rejected" ? (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
                           ✕ Rejected
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
-                          ✓ Approved
+                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+                          <MdCheckCircle size={12} className="text-emerald-600" /> Approved
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
                       {item.isProfileComplete ? (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                           ✓ Complete
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                           ⚠️ Incomplete
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <Toggle
-                        checked={item.status}
-                        loading={togglingId === item._id}
-                        onChange={() => handleStatusToggle(item._id, item.status)}
-                      />
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                      <div className="flex justify-center">
+                        <Toggle
+                          checked={item.status}
+                          loading={togglingId === item._id}
+                          onChange={() => handleStatusToggle(item._id, item.status)}
+                        />
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
                       <button
                         onClick={() => handleToggleFeatured(item._id, item.isFeatured)}
                         disabled={featuringId === item._id}
                         title={item.isFeatured ? "Remove from Featured" : "Mark as Featured"}
-                        className="transition-all disabled:opacity-40"
+                        className="transition-all disabled:opacity-40 p-1 rounded hover:bg-slate-100"
                       >
                         {featuringId === item._id ? (
                           <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto" />
                         ) : item.isFeatured ? (
-                          <MdStar size={22} className="text-amber-400" />
+                          <MdStar size={20} className="text-amber-400" />
                         ) : (
-                          <MdStarOutline size={22} className="opacity-25 hover:opacity-70 hover:text-amber-400 transition-all" />
+                          <MdStarOutline size={20} className="text-slate-300 hover:text-amber-400 transition-all" />
                         )}
                       </button>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => setWalletModalLab(item)}
-                          className="p-2 rounded-sm hover:bg-emerald-50 text-emerald-600 opacity-80 hover:opacity-100 transition-all"
+                          className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600 transition-colors"
                           title="Credit Wallet / Offer Points"
                         >
-                          <MdAccountBalanceWallet size={18} />
+                          <MdAccountBalanceWallet size={17} />
                         </button>
                         <button
                           onClick={() => viewDetails(item._id)}
-                          className="p-2 rounded-sm hover:bg-black/5 text-primary opacity-60 hover:opacity-100 transition-all"
+                          className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
                           title="View Details"
                         >
-                          <MdVisibility size={18} />
+                          <MdVisibility size={17} />
                         </button>
                         <button
                           onClick={() => handleEdit(item._id)}
-                          className="p-2 rounded-sm hover:bg-black/5 text-blue-600 opacity-60 hover:opacity-100 transition-all flex items-center justify-center"
+                          className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600 transition-colors flex items-center justify-center"
                           title="Edit Registration"
                           disabled={editingId === item._id}
                         >
                           {editingId === item._id ? (
-                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                           ) : (
-                            <MdEdit size={18} />
+                            <MdEdit size={17} />
                           )}
                         </button>
                         <button
                           onClick={() => handleDelete(item._id)}
                           disabled={deletingId === item._id}
-                          className="p-2 rounded-sm hover:bg-red-100 text-red-600 transition-colors disabled:opacity-50"
+                          className="p-1.5 rounded-md hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
                           title="Delete"
                         >
                           {deletingId === item._id ? (
-                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                           ) : (
-                            <MdDelete size={18} />
+                            <MdDelete size={17} />
                           )}
                         </button>
                       </div>

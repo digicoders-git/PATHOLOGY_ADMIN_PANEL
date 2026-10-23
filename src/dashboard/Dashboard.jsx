@@ -246,10 +246,10 @@ const Dashboard = () => {
               >
                 <span
                   className="text-[17px] font-black leading-none tracking-tight uppercase flex items-center"
-                  style={{ color: "#C32019" }}
+                  style={{ color: "#FF0000" }}
                 >
                   LABO
-                  <span className="inline-flex relative -top-[0.45em] text-[0.46em] ml-[1px] mr-[2.5px] text-[#C32019]">
+                  <span className="inline-flex relative -top-[0.45em] text-[0.46em] ml-[1px] mr-[2.5px] text-[#FF0000]">
                     <FaMapMarkerAlt />
                   </span>
                   INDIA

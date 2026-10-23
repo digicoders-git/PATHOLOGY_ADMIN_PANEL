@@ -437,7 +437,16 @@ const RegistrationDetails = () => {
                   label="Registration No"
                   value={data.registrationNumber}
                 />
-                <InfoItem label="GSTIN Number" value={data.gstin || "N/A"} />
+                <InfoItem
+                  label="GSTIN Number"
+                  value={
+                    data.gstin
+                      ? data.gstin
+                      : data.isGstRegistered === false
+                      ? "Non-GST Lab (Exempted)"
+                      : "N/A"
+                  }
+                />
                 {/* <InfoItem label="License No" value={data.license || "N/A"} /> */}
               </div>
             </div>
