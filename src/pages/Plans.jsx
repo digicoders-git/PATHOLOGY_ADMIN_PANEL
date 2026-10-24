@@ -19,11 +19,13 @@ import Swal from "sweetalert2";
 const getBadgeUrl = (badge) => {
   if (!badge) return null;
   let url = typeof badge === "string" ? badge : badge.cloudinary || badge.local || "";
-  if (!url) return null;
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) return url;
-  const baseUrl = (import.meta.env.VITE_API_BASE_URL || "https://api.laboindia.com").replace(/\/+$/, "");
+  if (!url || typeof url !== "string" || !url.trim()) return null;
+  url = url.trim();
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
+    return url;
+  }
   const cleanPath = url.replace(/^\/+/, "");
-  return `${baseUrl}/${cleanPath}`;
+  return `https://pathology-backend-live.onrender.com/${cleanPath}`;
 };
 
 const Plans = () => {
@@ -478,6 +480,16 @@ const Plans = () => {
                           src={getBadgeUrl(plan.offerBadge)} 
                           alt="Offer Badge" 
                           className="w-10 h-10 object-contain drop-shadow-xs" 
+                          onError={(e) => {
+                            const currentSrc = e.target.src;
+                            if (currentSrc.includes("pathology-backend-live.onrender.com")) {
+                              e.target.src = currentSrc.replace("https://pathology-backend-live.onrender.com", "https://api.laboindia.com");
+                            } else if (currentSrc.includes("api.laboindia.com")) {
+                              e.target.src = currentSrc.replace("https://api.laboindia.com", "https://pathology-backend-live.onrender.com");
+                            } else {
+                              e.target.style.display = "none";
+                            }
+                          }}
                         />
                         <div>
                           <span className="text-[9px] font-black uppercase text-amber-800 block">Offer Badge</span>
