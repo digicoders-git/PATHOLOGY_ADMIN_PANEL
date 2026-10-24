@@ -4,18 +4,36 @@ import RegistrationDetails from "../pages/RegistrationDetails";
 import CreateRegistration from "../pages/CreateRegistration";
 import EditRegistration from "../pages/EditRegistration";
 
-const Profile = React.lazy(() => import("../pages/Profile"));
-const TestsServices = React.lazy(() => import("../pages/TestsServices"));
-const Parents = React.lazy(() => import("../pages/Parents"));
-const Categories = React.lazy(() => import("../pages/Categories"));
-const Plans = React.lazy(() => import("../pages/Plans"));
-const Patients = React.lazy(() => import("../pages/Patients"));
-const Bookings = React.lazy(() => import("../pages/Bookings"));
-const Slots = React.lazy(() => import("../pages/Slots"));
-const LabTestPricing = React.lazy(() => import("../pages/LabTestPricing"));
-const Notifications = React.lazy(() => import("../pages/Notifications"));
-const Offers = React.lazy(() => import("../pages/Offers"));
-const SupportQueries = React.lazy(() => import("../pages/SupportQueries"));
+// Robust chunk retry wrapper: if an old chunk 404s after new deployment, auto-reload to get latest chunks
+const lazyRetry = (fn) =>
+  React.lazy(async () => {
+    try {
+      return await fn();
+    } catch (err) {
+      console.warn("Chunk mismatch detected, refreshing to fetch latest deployment:", err);
+      const key = "chunk_retry_" + window.location.pathname;
+      const isRetried = sessionStorage.getItem(key);
+      if (!isRetried) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        return new Promise(() => {});
+      }
+      throw err;
+    }
+  });
+
+const Profile = lazyRetry(() => import("../pages/Profile"));
+const TestsServices = lazyRetry(() => import("../pages/TestsServices"));
+const Parents = lazyRetry(() => import("../pages/Parents"));
+const Categories = lazyRetry(() => import("../pages/Categories"));
+const Plans = lazyRetry(() => import("../pages/Plans"));
+const Patients = lazyRetry(() => import("../pages/Patients"));
+const Bookings = lazyRetry(() => import("../pages/Bookings"));
+const Slots = lazyRetry(() => import("../pages/Slots"));
+const LabTestPricing = lazyRetry(() => import("../pages/LabTestPricing"));
+const Notifications = lazyRetry(() => import("../pages/Notifications"));
+const Offers = lazyRetry(() => import("../pages/Offers"));
+const SupportQueries = lazyRetry(() => import("../pages/SupportQueries"));
 
 export const AppRoute = [
   { path: "profile", component: Profile },
