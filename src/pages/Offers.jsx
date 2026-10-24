@@ -75,7 +75,11 @@ const Offers = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const effectiveType = activeTab === "app_banner" ? "app_banner" : (typeFilter || "!app_banner");
+      let effectiveType;
+      if (activeTab === "app_banner") effectiveType = "app_banner";
+      else if (activeTab === "app_popup") effectiveType = "popup";
+      else effectiveType = typeFilter || "slider,banner";
+
       const res = await getAllOffers({ page, limit: 10, search, status: statusFilter, offerType: effectiveType });
       if (res.success) { setData(res.data); setPagination(res.pagination); }
     } catch { toast.error("Failed to fetch offers"); }
@@ -106,9 +110,11 @@ const Offers = () => {
     setEditId(null);
     setForm({
       ...EMPTY,
-      offerType: activeTab === "app_banner" ? "app_banner" : "slider",
-      bgColor: activeTab === "app_banner" ? "#FF0000" : "#ffffff",
-      textColor: activeTab === "app_banner" ? "#ffffff" : "#000000",
+      offerType: activeTab === "app_banner" ? "app_banner" : (activeTab === "app_popup" ? "popup" : "slider"),
+      bgColor: activeTab === "app_banner" || activeTab === "app_popup" ? "#FF0000" : "#ffffff",
+      textColor: activeTab === "app_banner" || activeTab === "app_popup" ? "#ffffff" : "#000000",
+      couponCode: activeTab === "app_popup" ? "SAVE100" : "",
+      discountPercent: activeTab === "app_popup" ? "20" : "",
     });
     setPreviewUrl(null);
     setIsModalOpen(true);
@@ -252,6 +258,22 @@ const Offers = () => {
 
           <button
             type="button"
+            onClick={() => handleTabChange("app_popup")}
+            className={`flex items-center gap-2 pb-3.5 px-3 text-xs font-bold transition-all border-b-2 cursor-pointer ${
+              activeTab === "app_popup"
+                ? "text-rose-600 border-rose-600"
+                : "text-slate-400 border-transparent hover:text-slate-600"
+            }`}
+          >
+            <MdLocalOffer size={18} />
+            <span>Patient App Popups</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-black border border-amber-200">
+              Offer Dialog
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabChange("website")}
             className={`flex items-center gap-2 pb-3.5 px-3 text-xs font-bold transition-all border-b-2 cursor-pointer ${
               activeTab === "website"
@@ -271,6 +293,17 @@ const Offers = () => {
             <div className="text-xs text-rose-900 leading-relaxed">
               <span className="font-bold">Dynamic Home Footer Banners: </span>
               Active banners configured here are delivered directly to the <strong>Patient Mobile App</strong> home screen footer. If multiple banners are active, the app automatically cycles through them as a slider.
+            </div>
+          </div>
+        )}
+
+        {/* Tip Box for App Popups */}
+        {activeTab === "app_popup" && (
+          <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-3.5 flex items-start gap-3">
+            <span className="p-1 rounded bg-amber-100 text-amber-700 shrink-0 mt-0.5"><MdLocalOffer size={16} /></span>
+            <div className="text-xs text-amber-900 leading-relaxed">
+              <span className="font-bold">Dynamic Patient App Offer Popup: </span>
+              Active offers configured here automatically appear as an interactive popup dialog with coupon code, discount percentage, and claim action when patients open the mobile app.
             </div>
           </div>
         )}
@@ -460,13 +493,15 @@ const Offers = () => {
                 <div>
                   <h3 className="text-sm font-bold text-slate-800">
                     {editId
-                      ? (form.offerType === "app_banner" ? "Edit App Banner" : "Edit Offer")
-                      : (form.offerType === "app_banner" ? "Add Patient App Banner" : "Add New Offer")}
+                      ? (form.offerType === "app_banner" ? "Edit App Banner" : (form.offerType === "popup" ? "Edit App Popup Offer" : "Edit Offer"))
+                      : (form.offerType === "app_banner" ? "Add Patient App Banner" : (form.offerType === "popup" ? "Add Patient App Popup Offer" : "Add New Offer"))}
                   </h3>
                   <p className="text-[10px] text-slate-400 mt-0.5">
                     {form.offerType === "app_banner"
                       ? "Configure promotional banner for the Patient App Home Screen footer"
-                      : "Fill in the promotional offer details"}
+                      : (form.offerType === "popup"
+                          ? "Configure promotional popup dialog with coupon & discount for Patient App startup"
+                          : "Fill in the promotional offer details")}
                   </p>
                 </div>
                 <button onClick={resetForm} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition-all cursor-pointer">
