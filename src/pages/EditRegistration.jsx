@@ -16,6 +16,15 @@ import {
 import ModernSelect from "../components/ui/ModernSelect";
 import Loader from "./ui/Loader";
 
+const CERT_OPTIONS = [
+  "NABL",
+  "NABH",
+  "ISO",
+  "Clinical Health Licence",
+  "CMO",
+  "Other"
+];
+
 const EditRegistration = () => {
   const { colors } = useTheme();
   const navigate = useNavigate();
@@ -162,8 +171,9 @@ const EditRegistration = () => {
     ifscCode: "",
     staffCount: "",
     pathologyDocs: null,
-    cmoCertificate: null,
+    isGstRegistered: false,
     gstin: "",
+    gstCertificate: null,
     certifications: [{ name: "", file: null }],
     pricingItems: [],
     status: true,
@@ -177,6 +187,7 @@ const EditRegistration = () => {
     labBanner: null,
     pathologyDocs: null,
     cmoCertificate: null,
+    gstCertificate: null,
     certifications: [],
   });
 
@@ -230,14 +241,48 @@ const EditRegistration = () => {
             accountNumber: reg.accountNumber || "",
             ifscCode: reg.ifscCode || "",
             staffCount: reg.staffCount || "",
-            certifications:
-              reg.Certification && reg.Certification.length > 0
-                ? reg.Certification.map((c) => ({
-                    name: c.name,
-                    file: null,
-                    existingFile: c.file,
-                  }))
-                : [{ name: "", file: null }],
+            certifications: (() => {
+              const currentCerts = (reg.Certification || []).filter(
+                (c) => c && c.name,
+              );
+              const list = [...currentCerts];
+              if (
+                reg.cmoCertificate &&
+                !list.some((c) => c.name?.toLowerCase() === "cmo")
+              ) {
+                list.push({ name: "CMO", file: reg.cmoCertificate });
+              }
+              if (
+                reg.pathologyDocs &&
+                !list.some((c) =>
+                  c.name?.toLowerCase().includes("clinical health"),
+                )
+              ) {
+                list.push({
+                  name: "Clinical Health Licence",
+                  file: reg.pathologyDocs,
+                });
+              }
+
+              const standardNames = [
+                "NABL",
+                "NABH",
+                "ISO",
+                "Clinical Health Licence",
+                "CMO",
+              ];
+              return list.map((c) => {
+                const matchedStd = standardNames.find(
+                  (s) => s.toLowerCase() === c.name?.trim().toLowerCase(),
+                );
+                return {
+                  name: matchedStd || "Other",
+                  customName: matchedStd ? "" : c.name,
+                  file: null,
+                  existingFile: c.file,
+                };
+              });
+            })(),
             pricingItems: (() => {
                const selectedTestIds = reg.selectedTests ? reg.selectedTests.map(t => typeof t === "object" ? t._id : t) : [];
                const existingPricing = reg.testPricing || [];
@@ -261,6 +306,7 @@ const EditRegistration = () => {
             password: reg.password || "",
             latitude: reg.latitude || "",
             longitude: reg.longitude || "",
+            isGstRegistered: reg.isGstRegistered !== undefined ? reg.isGstRegistered : !!reg.gstin,
             gstin: reg.gstin || "",
           });
 
@@ -269,6 +315,7 @@ const EditRegistration = () => {
             labBanner: reg.labBanner,
             pathologyDocs: reg.pathologyDocs,
             cmoCertificate: reg.cmoCertificate,
+            gstCertificate: reg.gstCertificate || reg.gstDoc || null,
             certifications: reg.Certification || [],
           });
         }
@@ -324,23 +371,41 @@ const EditRegistration = () => {
     });
   };
 
-  const handleAddCert = () => {
+  const handleCertToggle = (name) => {
+    setFormData((prev) => {
+      const exists = prev.certifications.find((c) => c.name === name);
+      if (exists) {
+        return {
+          ...prev,
+          certifications: prev.certifications.filter((c) => c.name !== name),
+        };
+      } else {
+        return {
+          ...prev,
+          certifications: [
+            ...prev.certifications,
+            { name, file: null, existingFile: null, customName: "" },
+          ],
+        };
+      }
+    });
+  };
+
+  const handleCertFileChange = (name, file) => {
     setFormData((prev) => ({
       ...prev,
-      certifications: [...prev.certifications, { name: "", file: null }],
+      certifications: prev.certifications.map((c) =>
+        c.name === name ? { ...c, file } : c
+      ),
     }));
   };
 
-  const handleCertChange = (index, field, value) => {
-    const newCerts = [...formData.certifications];
-    newCerts[index][field] = value;
-    setFormData((prev) => ({ ...prev, certifications: newCerts }));
-  };
-
-  const handleRemoveCert = (index) => {
+  const handleOtherCertName = (customName) => {
     setFormData((prev) => ({
       ...prev,
-      certifications: prev.certifications.filter((_, i) => i !== index),
+      certifications: prev.certifications.map((c) =>
+        c.name === "Other" ? { ...c, customName } : c
+      ),
     }));
   };
 
@@ -393,7 +458,8 @@ const EditRegistration = () => {
         labType: formData.labType,
         establishmentYear: formData.establishmentYear,
         registrationNumber: formData.registrationNumber,
-        gstin: formData.gstin,
+        isGstRegistered: formData.isGstRegistered,
+        gstin: formData.isGstRegistered && formData.gstin ? formData.gstin.trim().toUpperCase() : "",
         description: formData.description,
         fullAddress: formData.fullAddress,
         areaName: formData.areaName,
@@ -432,11 +498,10 @@ const EditRegistration = () => {
         data.append("labLogo", formData.labLogo);
       if (formData.labBanner instanceof File)
         data.append("labBanner", formData.labBanner);
-      if (formData.pathologyDocs instanceof File)
-        data.append("pathologyDocs", formData.pathologyDocs);
-      if (formData.cmoCertificate instanceof File)
-        data.append("cmoCertificate", formData.cmoCertificate);
-
+      if (formData.isGstRegistered && formData.gstCertificate instanceof File) {
+        data.append("gstCertificate", formData.gstCertificate);
+        data.append("gstDoc", formData.gstCertificate);
+      }
       data.append("selectedTests", JSON.stringify(formData.selectedTests));
 
       const testArray = formData.pricingItems
@@ -450,13 +515,29 @@ const EditRegistration = () => {
       data.append("test", JSON.stringify(testArray));
 
       const certData = formData.certifications.map((c) => ({
-        name: c.name,
-        file: c.existingFile || null,
+        name:
+          c.name === "Other"
+            ? c.customName?.trim() || "Other Document"
+            : c.name,
+        file: c.file instanceof File ? null : c.existingFile || null,
       }));
       data.append("Certification", JSON.stringify(certData));
 
       formData.certifications.forEach((c) => {
-        if (c.file instanceof File) data.append("certificationFiles", c.file);
+        const finalName =
+          c.name === "Other"
+            ? c.customName?.trim() || "Other Document"
+            : c.name;
+        if (c.file instanceof File) {
+          data.append("certificationFiles", c.file);
+          data.append("certificationFileNames", finalName);
+          if (c.name === "CMO") {
+            data.append("cmoCertificate", c.file);
+          }
+          if (c.name === "Clinical Health Licence") {
+            data.append("pathologyDocs", c.file);
+          }
+        }
       });
 
       const res = await updateRegistration(id, data);
@@ -601,21 +682,79 @@ const EditRegistration = () => {
                 required
               />
             </div>
-            <div>
-              <label className={labelStyle}>GSTIN Number</label>
-              <input
-                type="text"
-                name="gstin"
-                value={formData.gstin}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    gstin: e.target.value.toUpperCase(),
-                  }))
-                }
-                style={inputStyle}
-                placeholder="e.g. 22AAAAA0000A1Z5"
-              />
+            <div className="md:col-span-3 p-4 rounded border bg-black/[0.02]" style={{ borderColor: colors.accent + "20" }}>
+              <div 
+                className="flex items-center gap-2 cursor-pointer select-none mb-3"
+                onClick={() => setFormData(prev => ({ 
+                  ...prev, 
+                  isGstRegistered: !prev.isGstRegistered,
+                  gstin: !prev.isGstRegistered ? prev.gstin : "",
+                  gstCertificate: !prev.isGstRegistered ? prev.gstCertificate : null,
+                }))}
+              >
+                <div className="text-xl">
+                  {formData.isGstRegistered ? <MdCheckBox className="text-blue-600" /> : <MdCheckBoxOutlineBlank />}
+                </div>
+                <span className="text-xs font-bold uppercase tracking-tight">
+                  GST Registered Laboratory
+                </span>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded ml-2 ${formData.isGstRegistered ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                  {formData.isGstRegistered ? "GST Registered (ON)" : "Non-GST Lab (OFF)"}
+                </span>
+              </div>
+
+              {formData.isGstRegistered && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-black/10">
+                  <div>
+                    <label className={labelStyle}>GSTIN Number *</label>
+                    <input
+                      type="text"
+                      name="gstin"
+                      value={formData.gstin}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          gstin: e.target.value.toUpperCase(),
+                        }))
+                      }
+                      style={inputStyle}
+                      placeholder="e.g. 22AAAAA0000A1Z5"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>GST Certificate / Document</label>
+                    {existingFiles.gstCertificate && !formData.gstCertificate && (
+                      <a
+                        href={existingFiles.gstCertificate}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] text-blue-600 font-bold underline block mb-2"
+                      >
+                        📄 View Current GST Document
+                      </a>
+                    )}
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      onChange={(e) => setFormData(prev => ({ ...prev, gstCertificate: e.target.files[0] }))}
+                      className="text-xs block w-full file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-black/10 hover:file:bg-black/20 file:cursor-pointer"
+                    />
+                    {formData.gstCertificate && (
+                      <div className="text-[10px] text-green-700 flex items-center justify-between mt-1 font-semibold bg-green-50 p-1.5 rounded border border-green-200">
+                        <span>✓ {formData.gstCertificate.name} ({(formData.gstCertificate.size / 1024).toFixed(1)} KB)</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, gstCertificate: null }))}
+                          className="text-red-500 text-xs font-bold hover:text-red-700 ml-2"
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="md:col-span-3">
               <label className={labelStyle}>Description</label>
@@ -1007,7 +1146,7 @@ const EditRegistration = () => {
 
 
 
-        {/* Certifications */}
+        {/* Certifications & Licences (Dynamic Checkbox based) */}
         <div
           className={groupStyle}
           style={{
@@ -1015,151 +1154,121 @@ const EditRegistration = () => {
             borderColor: colors.accent + "20",
           }}
         >
-          <div className="flex justify-between items-center mb-4 border-b pb-2">
+          <div className="border-b pb-2 mb-4">
             <h2 className="text-xs font-black uppercase opacity-80">
-              Certifications
+              Certifications & Mandatory Licences
             </h2>
-            <button
-              type="button"
-              onClick={handleAddCert}
-              className="text-[10px] font-bold uppercase flex items-center gap-1 opacity-60 hover:opacity-100"
-            >
-              <MdAdd size={16} /> Add Certificate
-            </button>
+            <p className="text-[10px] opacity-50 mt-0.5">
+              Select all accreditations and licences held by the laboratory. Ticking any checkbox enables dynamic document upload.
+            </p>
           </div>
-          {formData.certifications.map((cert, idx) => (
-            <div
-              key={idx}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 border rounded bg-black/5 relative"
-              style={{ borderColor: colors.accent + "10" }}
-            >
-              <div>
-                <label className={labelStyle}>Certificate Name</label>
-                <input
-                  type="text"
-                  value={cert.name}
-                  onChange={(e) =>
-                    handleCertChange(idx, "name", e.target.value)
-                  }
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label className={labelStyle}>Attachment</label>
-                {cert.existingFile && !cert.file && (
-                  <a
-                    href={cert.existingFile}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[10px] text-blue-600 underline block mb-1"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {CERT_OPTIONS.map((certName) => {
+              const isSelected = formData.certifications.some(
+                (c) => c.name === certName,
+              );
+              const selectedCert = formData.certifications.find(
+                (c) => c.name === certName,
+              );
+
+              return (
+                <div
+                  key={certName}
+                  className={`p-4 border rounded transition-all flex flex-col gap-3 ${
+                    isSelected
+                      ? "bg-black/5 border-black/40"
+                      : "border-black/10 opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <div
+                    className="flex items-center gap-3 cursor-pointer select-none"
+                    onClick={() => handleCertToggle(certName)}
                   >
-                    View Current File
-                  </a>
-                )}
-                <input
-                  type="file"
-                  onChange={(e) =>
-                    handleCertChange(idx, "file", e.target.files[0])
-                  }
-                  style={inputStyle}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => handleRemoveCert(idx)}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-all"
-              >
-                <MdDelete size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
+                    <div className="text-xl">
+                      {isSelected ? (
+                        <MdCheckBox className="text-blue-600" />
+                      ) : (
+                        <MdCheckBoxOutlineBlank />
+                      )}
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-tight">
+                      {certName}
+                    </span>
+                  </div>
 
-        {/* Registration Documents */}
-        <div
-          className={groupStyle}
-          style={{
-            backgroundColor: colors.background,
-            borderColor: colors.accent + "20",
-          }}
-        >
-          <h2 className="text-xs font-black uppercase mb-4 border-b pb-2 opacity-80">
-            Registration Documents
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div
-              className="border border-dashed p-6 rounded text-center"
-              style={{ borderColor: colors.accent + "30" }}
-            >
-              <label className={labelStyle}>Pathology License / Document</label>
-              {existingFiles.pathologyDocs && !formData.pathologyDocs && (
-                <a
-                  href={existingFiles.pathologyDocs}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs font-bold text-blue-600 underline block mb-3"
-                >
-                  📄 View Existing Pathology Document
-                </a>
-              )}
-              <input
-                type="file"
-                name="pathologyDocs"
-                onChange={handleChange}
-                className="hidden"
-                id="edit-pathology-docs-input"
-              />
-              <label
-                htmlFor="edit-pathology-docs-input"
-                className="cursor-pointer flex flex-col items-center gap-2"
-              >
-                <MdCloudUpload size={28} className="opacity-40" />
-                <span className="text-[10px] font-bold">
-                  {formData.pathologyDocs
-                    ? formData.pathologyDocs.name
-                    : existingFiles.pathologyDocs
-                    ? "Change Pathology Document"
-                    : "Upload Pathology Document"}
-                </span>
-              </label>
-            </div>
+                  {/* Dynamic File Upload & Custom Name (if Other) when Ticked */}
+                  {isSelected && (
+                    <div
+                      className="mt-2 pl-7 border-l-2 ml-2 space-y-3"
+                      style={{ borderColor: colors.accent + "30" }}
+                    >
+                      {certName === "Other" && (
+                        <div>
+                          <label className="text-[9px] font-bold uppercase block mb-1 opacity-70">
+                            Certificate / Licence Name *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Biomedical Waste Authorization, Fire NOC"
+                            value={selectedCert?.customName || ""}
+                            onChange={(e) =>
+                              handleOtherCertName(e.target.value)
+                            }
+                            style={inputStyle}
+                            className="text-xs py-1.5"
+                          />
+                        </div>
+                      )}
 
-            <div
-              className="border border-dashed p-6 rounded text-center"
-              style={{ borderColor: colors.accent + "30" }}
-            >
-              <label className={labelStyle}>CMO Certificate (Clinical Establishment ACT)</label>
-              {existingFiles.cmoCertificate && !formData.cmoCertificate && (
-                <a
-                  href={existingFiles.cmoCertificate}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs font-bold text-blue-600 underline block mb-3"
-                >
-                  📄 View Existing CMO Certificate
-                </a>
-              )}
-              <input
-                type="file"
-                name="cmoCertificate"
-                onChange={handleChange}
-                className="hidden"
-                id="edit-cmo-input"
-              />
-              <label
-                htmlFor="edit-cmo-input"
-                className="cursor-pointer flex flex-col items-center gap-2"
-              >
-                <MdCloudUpload size={28} className="opacity-40 text-blue-600" />
-                <span className="text-[10px] font-bold">
-                  {formData.cmoCertificate
-                    ? formData.cmoCertificate.name
-                    : existingFiles.cmoCertificate
-                    ? "Change CMO Certificate"
-                    : "Upload CMO Certificate"}
-                </span>
-              </label>
-            </div>
+                      {/* View Existing File Link */}
+                      {selectedCert?.existingFile && !selectedCert?.file && (
+                        <a
+                          href={selectedCert.existingFile}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] text-blue-600 font-bold underline flex items-center gap-1.5"
+                        >
+                          📄 View Current Document
+                        </a>
+                      )}
+
+                      <div>
+                        <label className="text-[9px] font-bold uppercase block mb-1 opacity-60">
+                          {selectedCert?.existingFile
+                            ? "Replace Document (PDF, JPG, PNG)"
+                            : "Upload Document / Certificate (PDF, JPG, PNG)"}
+                        </label>
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp"
+                          className="text-xs block w-full file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-black/10 hover:file:bg-black/20 file:cursor-pointer"
+                          onChange={(e) =>
+                            handleCertFileChange(certName, e.target.files[0])
+                          }
+                        />
+                        {selectedCert?.file && (
+                          <div className="text-[10px] text-green-700 flex items-center justify-between mt-1 font-semibold bg-green-50 p-1.5 rounded border border-green-200">
+                            <span>
+                              ✓ {selectedCert.file.name} (
+                              {(selectedCert.file.size / 1024).toFixed(1)} KB)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCertFileChange(certName, null)
+                              }
+                              className="text-red-500 text-xs font-bold hover:text-red-700 ml-2"
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

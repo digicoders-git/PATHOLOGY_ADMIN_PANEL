@@ -635,25 +635,49 @@ const RegistrationDetails = () => {
                 Documentation & Gallery
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {data.pathologyDocs && (
-                  <DocCard label="Pathology Docs" url={data.pathologyDocs} />
-                )}
-                {data.cmoCertificate && (
-                  <DocCard label="CMO Certificate (Clinical Establishment ACT)" url={data.cmoCertificate} />
-                )}
                 {data.labBanner && (
                   <DocCard label="Lab Banner" url={data.labBanner} isImage />
                 )}
                 {data.labLogo && (
                   <DocCard label="Lab Logo" url={data.labLogo} isImage />
                 )}
-                {data.Certification?.map((cert, i) => (
+                {/* Dynamic Certifications & Licences */}
+                {data.Certification?.filter((cert) => cert.file).map((cert, i) => (
                   <DocCard
-                    key={i}
+                    key={`cert-${i}`}
                     label={cert.name || `Certification ${i + 1}`}
                     url={cert.file}
                   />
                 ))}
+                {/* Legacy Fallbacks (only if not already listed in Certification) */}
+                {data.cmoCertificate &&
+                  !data.Certification?.some(
+                    (c) =>
+                      c.file === data.cmoCertificate ||
+                      c.name?.trim().toLowerCase() === "cmo",
+                  ) && (
+                    <DocCard
+                      label="CMO Certificate"
+                      url={data.cmoCertificate}
+                    />
+                  )}
+                {data.pathologyDocs &&
+                  !data.Certification?.some(
+                    (c) =>
+                      c.file === data.pathologyDocs ||
+                      c.name?.trim().toLowerCase().includes("clinical health"),
+                  ) && (
+                    <DocCard
+                      label="Clinical Health Licence"
+                      url={data.pathologyDocs}
+                    />
+                  )}
+                {(data.gstCertificate || data.gstDoc) && (
+                  <DocCard
+                    label="GST Certificate"
+                    url={data.gstCertificate || data.gstDoc}
+                  />
+                )}
               </div>
             </div>
         </div>

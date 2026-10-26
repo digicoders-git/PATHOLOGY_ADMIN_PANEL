@@ -25,7 +25,7 @@ const getBadgeUrl = (badge) => {
     return url;
   }
   const cleanPath = url.replace(/^\/+/, "");
-  return `https://pathology-backend-live.onrender.com/${cleanPath}`;
+  return `https://api.laboindia.com/${cleanPath}`;
 };
 
 const Plans = () => {
