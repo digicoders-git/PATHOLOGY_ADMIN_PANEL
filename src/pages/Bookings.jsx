@@ -390,6 +390,11 @@ const handleDelete = (id) => {
                             {item.couponCode}
                           </span>
                         )}
+                        {item.walletCoinsUsed > 0 && (
+                          <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-sm mt-0.5 font-bold flex items-center gap-0.5">
+                            🪙 -₹{item.walletCoinsUsed} Coins
+                          </span>
+                        )}
                         {item.adminDiscountAmount > 0 && (
                           <span className="text-[9px] text-purple-600 font-bold mt-0.5">Admin: -₹{item.adminDiscountAmount}</span>
                         )}

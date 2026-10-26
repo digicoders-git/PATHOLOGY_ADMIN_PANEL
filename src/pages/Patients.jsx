@@ -201,6 +201,7 @@ const Patients = () => {
                 <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider opacity-50">Email</th>
                 <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider opacity-50">Age / Gender</th>
                 <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider opacity-50">Address</th>
+                <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider opacity-50 text-center">Wallet Coins</th>
                 <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider opacity-50 text-center">Status</th>
                 <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider opacity-50 text-right">Action</th>
               </tr>
@@ -208,13 +209,13 @@ const Patients = () => {
             <tbody className="divide-y divide-black/5">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="py-20 text-center text-sm opacity-40">
+                  <td colSpan="9" className="py-20 text-center text-sm opacity-40">
                     Loading patients...
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-20 text-center text-sm opacity-40">
+                  <td colSpan="9" className="py-20 text-center text-sm opacity-40">
                     {hasFilters ? "No patients match your filters" : "No patients found"}
                   </td>
                 </tr>
@@ -281,6 +282,13 @@ const Patients = () => {
                           {patient.address || "—"}
                         </span>
                       </div>
+                    </td>
+
+                    {/* Wallet Coins */}
+                    <td className="px-5 py-3.5 text-center">
+                      <span className="inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                        🪙 {patient.walletBalance || 0}
+                      </span>
                     </td>
 
                     {/* Status Badge */}

@@ -32,6 +32,7 @@ const EMPTY = {
   couponCode: "",
   discountPercent: "",
   discountAmount: "",
+  coinsReward: "",
   offerType: "app_banner",
   link: "",
   bgColor: "#FF0000",
@@ -135,6 +136,7 @@ const Offers = () => {
       couponCode: item.couponCode || "",
       discountPercent: item.discountPercent || "",
       discountAmount: item.discountAmount || "",
+      coinsReward: item.coinsReward ?? "",
       offerType: item.offerType || (activeTab === "app" ? "app_banner" : "slider"),
       link: item.link || "",
       bgColor: item.bgColor || "#ffffff",
@@ -330,6 +332,7 @@ const Offers = () => {
                     {activeTab === "app" ? (
                       <>
                         <th className="px-5 py-3.5">Coupon Code</th>
+                        <th className="px-5 py-3.5">Coin Reward</th>
                         <th className="px-5 py-3.5">Target Link</th>
                       </>
                     ) : (
@@ -348,7 +351,7 @@ const Offers = () => {
                 <tbody className="divide-y divide-slate-100">
                   {data.length === 0 ? (
                     <tr>
-                      <td colSpan={activeTab === "app" ? 6 : 7} className="py-20 text-center text-xs text-slate-400">
+                      <td colSpan={7} className="py-20 text-center text-xs text-slate-400">
                         {activeTab === "app" ? "No App Offers found. Click '+ Add App Offer' above to add one!" : "No offers found."}
                       </td>
                     </tr>
@@ -382,6 +385,12 @@ const Offers = () => {
                             ) : (
                               <span className="text-xs text-slate-300">—</span>
                             )}
+                          </td>
+                          {/* Coins Reward */}
+                          <td className="px-5 py-3.5">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-full">
+                              🪙 {item.coinsReward && item.coinsReward > 0 ? `${item.coinsReward} Coins` : "50 Coins (Default)"}
+                            </span>
                           </td>
                           {/* Target Link */}
                           <td className="px-5 py-3.5">
@@ -534,16 +543,21 @@ const Offers = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
-                        <Label>Target / Redirect Link (Optional)</Label>
+                        <Label>Reward Labo Coins (Optional)</Label>
+                        <input type="number" min="0" value={form.coinsReward} onChange={(e) => set("coinsReward", e.target.value)}
+                          className={`${inp} font-bold text-amber-700 bg-amber-50/50 border-amber-200`} placeholder="e.g. 50 or 100" />
+                      </div>
+                      <div>
+                        <Label>Target Link (Optional)</Label>
                         <input value={form.link} onChange={(e) => set("link", e.target.value)}
                           className={inp} placeholder="https://... or test URL" />
                       </div>
                       <div>
                         <Label>Sort Order</Label>
                         <input type="number" min="0" value={form.sortOrder} onChange={(e) => set("sortOrder", e.target.value)}
-                          className={inp} placeholder="0 (Lower numbers show first)" />
+                          className={inp} placeholder="0 (Lower shows first)" />
                       </div>
                     </div>
                   </>
@@ -585,7 +599,7 @@ const Offers = () => {
                         className={`${inp} resize-none`} placeholder="Brief description of the offer..." />
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
                         <Label>Discount (%)</Label>
                         <input type="number" min="0" max="100" value={form.discountPercent} onChange={(e) => set("discountPercent", e.target.value)}
@@ -595,6 +609,11 @@ const Offers = () => {
                         <Label>Discount (₹)</Label>
                         <input type="number" min="0" value={form.discountAmount} onChange={(e) => set("discountAmount", e.target.value)}
                           className={inp} placeholder="100" />
+                      </div>
+                      <div>
+                        <Label>Reward Coins</Label>
+                        <input type="number" min="0" value={form.coinsReward} onChange={(e) => set("coinsReward", e.target.value)}
+                          className={`${inp} font-bold text-amber-700 bg-amber-50/50 border-amber-200`} placeholder="50" />
                       </div>
                       <div>
                         <Label>Coupon Code</Label>
