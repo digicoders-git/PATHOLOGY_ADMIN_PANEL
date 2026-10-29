@@ -11,7 +11,7 @@ const firebaseConfig = {
   measurementId: 'G-ZX7PQLL6CL'
 };
 
-const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.laboindia.com';
 const VAPID_KEY = 'BPERg2BAS_k4Bq2pvQc4CWQq0RJNn_OSPv-qXNSkiYnqi15qWctR8Ha8cBxki22nE7NQi5J2rL1LzDNHHT8Cf3M';
 
 const app = initializeApp(firebaseConfig);

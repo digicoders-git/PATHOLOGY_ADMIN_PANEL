@@ -208,7 +208,8 @@ const TestsServices = () => {
       precautions_after: Array.isArray(item.precautions_after) ? item.precautions_after : [],
       image: null,
     });
-    setPreviewUrl(item.image?.cloudinary || (item.image?.local ? `${import.meta.env.VITE_API_BASE_URL}/${item.image.local}` : null));
+    const localUrl = item.image?.local ? (item.image.local.startsWith('http') ? item.image.local : `https://api.laboindia.com/${item.image.local.replace(/^\/+/, "")}`) : null;
+    setPreviewUrl(localUrl || null);
     setIsModalOpen(true);
   };
 
@@ -401,8 +402,8 @@ const TestsServices = () => {
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
-                            {(item.image?.cloudinary || item.image?.local)
-                              ? <img src={item.image.cloudinary || `${import.meta.env.VITE_API_BASE_URL}/${item.image.local}`} className="w-full h-full object-cover" />
+                            {item.image?.local
+                              ? <img src={item.image.local.startsWith('http') ? item.image.local : `https://api.laboindia.com/${(item.image.local || "").replace(/^\/+/, "")}`} className="w-full h-full object-cover" onError={e => { e.target.style.display='none'; }} />
                               : <MdOutlineScience className="text-slate-300" size={18} />}
                           </div>
                           <div>

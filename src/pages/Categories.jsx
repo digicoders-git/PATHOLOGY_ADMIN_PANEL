@@ -91,7 +91,7 @@ const Categories = () => {
   const openEdit = (cat) => {
     setEditId(cat._id);
     setCatForm({ name: cat.name, description: cat.description || "", image: null });
-    const img = cat.image?.cloudinary || (cat.image?.local ? `${import.meta.env.VITE_API_BASE_URL}/${cat.image.local}` : null);
+    const img = cat.image?.cloudinary || getImgSrc(cat.image);
     setPreviewUrl(img);
     setModalOpen(true);
   };
@@ -154,7 +154,10 @@ const Categories = () => {
 
   const getImgSrc = (image) => {
     if (!image) return null;
-    return image.cloudinary || (image.local ? `${import.meta.env.VITE_API_BASE_URL}/${image.local}` : null);
+    const url = image.cloudinary || image.local || "";
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    return `https://api.laboindia.com/${url.replace(/^\/+/, "")}`;
   };
 
   // Sample Download

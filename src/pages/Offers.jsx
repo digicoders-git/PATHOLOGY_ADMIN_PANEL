@@ -53,6 +53,21 @@ const Label = ({ children }) => (
 
 const WEB_OFFER_TYPES = ["slider", "banner", "popup"];
 
+export const getOfferImageUrl = (image) => {
+  if (!image) return null;
+  let url = typeof image === "string" ? image : image.cloudinary || image.local || "";
+  if (!url || typeof url !== "string" || !url.trim()) return null;
+  url = url.trim();
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
+    if (url.includes("pathology-backend-live.onrender.com")) {
+      return url.replace("https://pathology-backend-live.onrender.com", "https://api.laboindia.com");
+    }
+    return url;
+  }
+  const cleanPath = url.replace(/^\/+/, "");
+  return `https://api.laboindia.com/${cleanPath}`;
+};
+
 const Offers = () => {
   const [activeTab, setActiveTab] = useState("app"); // "app" | "website"
   const [data, setData] = useState([]);
@@ -147,7 +162,7 @@ const Offers = () => {
       sortOrder: item.sortOrder ?? "0",
       image: null,
     });
-    setPreviewUrl(item.image?.cloudinary || (item.image?.local ? `${import.meta.env.VITE_API_BASE_URL}/${item.image.local}` : null));
+    setPreviewUrl(getOfferImageUrl(item.image));
     setIsModalOpen(true);
   };
 
@@ -362,8 +377,8 @@ const Offers = () => {
                         <div className="flex items-center gap-3">
                           <div className={`rounded-lg overflow-hidden shrink-0 flex items-center justify-center border border-slate-200 ${activeTab === "app" ? "w-28 h-12 bg-slate-900" : "w-14 h-10"}`}
                             style={{ backgroundColor: item.bgColor || "#f8fafc" }}>
-                            {(item.image?.cloudinary || item.image?.local)
-                              ? <img src={item.image.cloudinary || `${import.meta.env.VITE_API_BASE_URL}/${item.image.local}`} className="w-full h-full object-cover" alt="Banner" />
+                            {getOfferImageUrl(item.image)
+                              ? <img src={getOfferImageUrl(item.image)} className="w-full h-full object-cover" alt="Banner" />
                               : <MdImage className="text-slate-300" size={20} />}
                           </div>
                           <div>
