@@ -11,12 +11,16 @@ export const getActiveOffers = async (params) => {
 };
 
 export const createOffer = async (data) => {
-  const res = await api.post("/offers/create", data);
+  const res = await api.post("/offers/create", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 
 export const updateOffer = async (id, data) => {
-  const res = await api.put(`/offers/update/${id}`, data);
+  const res = await api.put(`/offers/update/${id}`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 
