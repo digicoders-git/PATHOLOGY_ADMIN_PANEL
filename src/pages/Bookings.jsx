@@ -124,11 +124,13 @@ const handleDelete = (id) => {
     }
   };
 
-  const handleStatusUpdate = async (id, newStatus) => {
+  const handleStatusUpdate = async (id, updateData) => {
     try {
-      const res = await updateBookingStatus(id, { status: newStatus });
+      const res = await updateBookingStatus(id, updateData);
       if (res.success) {
-        toast.success(`Status updated to ${newStatus}`);
+        const key = Object.keys(updateData)[0];
+        const val = Object.values(updateData)[0];
+        toast.success(`${key === 'paymentStatus' ? 'Payment status' : 'Status'} updated to ${val}`);
         fetchData();
       }
     } catch (err) {
@@ -411,8 +413,18 @@ const handleDelete = (id) => {
                             ? "bg-red-100 text-red-700"
                             : "bg-amber-100 text-amber-700"
                         }`}>
-                          {item.paymentStatus}
+                          {item.paymentStatus || "Pending"}
                         </span>
+                        <select
+                          value={item.paymentStatus || "Pending"}
+                          onChange={(e) => handleStatusUpdate(item._id, { paymentStatus: e.target.value })}
+                          className="text-[9px] font-bold border rounded-sm px-1 py-0.5 outline-none cursor-pointer mt-0.5"
+                          style={{ backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Paid">Paid</option>
+                          <option value="Failed">Failed</option>
+                        </select>
                         <span className="text-[9px] opacity-40 font-bold uppercase">
                           {item.paymentMode}
                         </span>
@@ -423,7 +435,7 @@ const handleDelete = (id) => {
                     <td className="px-5 py-3.5">
                       <select
                         value={item.status}
-                        onChange={(e) => handleStatusUpdate(item._id, e.target.value)}
+                        onChange={(e) => handleStatusUpdate(item._id, { status: e.target.value })}
                         className={`text-[10px] font-black uppercase px-2 py-1 rounded-sm border outline-none cursor-pointer ${
                           STATUS_COLORS[item.status] || "bg-slate-100 text-slate-600 border-slate-200"
                         }`}
