@@ -27,6 +27,9 @@ import {
   MdCalendarToday,
   MdDirectionsBike,
   MdPictureAsPdf,
+  MdSlideshow,
+  MdOutlineMenuBook,
+  MdPermMedia,
   MdFamilyRestroom,
   MdCreditCard,
   MdDoneAll,
@@ -183,6 +186,10 @@ const Dashboard = () => {
       path: "/dashboard/patients",
     },
         { name: "Offers & Banners", icon: MdLocalOffer, path: "/dashboard/offers" },
+    { name: "Video Tutorials", icon: MdOutlineVideoLibrary, path: "/dashboard/video-tutorials" },
+    { name: "Presentations", icon: MdSlideshow, path: "/dashboard/presentations" },
+    { name: "Catalogues", icon: MdOutlineMenuBook, path: "/dashboard/catalogues" },
+    { name: "Media & Events", icon: MdPermMedia, path: "/dashboard/media-events" },
 
     {
       name: "Plans",

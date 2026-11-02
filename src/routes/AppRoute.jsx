@@ -33,6 +33,10 @@ const Slots = lazyRetry(() => import("../pages/Slots"));
 const LabTestPricing = lazyRetry(() => import("../pages/LabTestPricing"));
 const Notifications = lazyRetry(() => import("../pages/Notifications"));
 const Offers = lazyRetry(() => import("../pages/Offers"));
+const VideoTutorials = lazyRetry(() => import("../pages/VideoTutorials"));
+const Presentations = lazyRetry(() => import("../pages/Presentations"));
+const Catalogues = lazyRetry(() => import("../pages/Catalogues"));
+const MediaEvents = lazyRetry(() => import("../pages/MediaEvents"));
 const SupportQueries = lazyRetry(() => import("../pages/SupportQueries"));
 
 export const AppRoute = [
@@ -51,5 +55,10 @@ export const AppRoute = [
   { path: "lab-test-pricing", component: LabTestPricing },
   { path: "notifications", component: Notifications },
   { path: "offers", component: Offers },
+  { path: "video-tutorials", component: VideoTutorials },
+  { path: "presentations", component: Presentations },
+  { path: "catalogues", component: Catalogues },
+  { path: "media-events", component: MediaEvents },
+  { path: "media", component: MediaEvents },
   { path: "support-queries", component: SupportQueries },
 ];
