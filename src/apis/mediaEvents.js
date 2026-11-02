@@ -55,7 +55,7 @@ export const resolveMediaImageUrl = (img) => {
   ) {
     return img;
   }
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.laboindia.com";
   const cleanPath = img.replace(/^\/+/, "");
   return `${baseUrl}/${cleanPath}`;
 };

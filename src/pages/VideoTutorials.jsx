@@ -78,7 +78,7 @@ export const getTutorialImageUrl = (thumbnail) => {
     return url;
   }
   const cleanPath = url.replace(/^\/+/, "");
-  const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  const base = import.meta.env.VITE_API_BASE_URL || "https://api.laboindia.com";
   return `${base.replace(/\/+$/, "")}/${cleanPath}`;
 };
 
